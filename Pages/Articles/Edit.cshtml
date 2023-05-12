@@ -1,0 +1,114 @@
+﻿@page
+@model MyWeb.Pages.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+
+}
+<head>
+    <partial name="WangeditorScript" />
+</head>
+<h1>Edit</h1>
+
+<h4>Article</h4>
+<hr />
+
+
+<form name="article" class="form" id="article" method="post">
+    <label asp-for=ArticleToUpdate.IsPublic></label>
+    <input type="checkbox" class="form-check" asp-for=ArticleToUpdate.IsPublic />
+    <input type="hidden" value="@Model.ArticleToUpdate.Id" asp-for=ArticleToUpdate.Id />
+    <label asp-for="ArticleToUpdate.Title"></label>
+    <input class="form-control" type="text" asp-for="ArticleToUpdate.Title" value="@Model.ArticleToUpdate.Title" />
+    <span class="text-danger" asp-validation-for="ArticleToUpdate.Title"></span>
+    <label asp-for="ArticleToUpdate.Texts"></label>
+    <span asp-validation-for="ArticleToUpdate.Texts"></span>
+    <textarea asp-for="ArticleToUpdate.Texts" style="display:none"></textarea>
+</form>
+<div id="toolbar-container"></div>
+<div id="editor-container" style="min-height:400px;"></div>
+<input type="submit" class="btn-primary" form="article" />
+<script>
+     const E = window.wangEditor
+
+     // 切换语言
+     const LANG = location.href.indexOf('lang=en') > 0 ? 'en' : 'zh-CN'
+     E.i18nChangeLanguage(LANG)
+
+     window.editor = E.createEditor({
+       selector: '#editor-container',
+       html: '@Html.Raw(Model.ArticleToUpdate.Texts.Replace("\\","/"))',
+       config: {
+         placeholder: 'Type here...',
+         MENU_CONF: {
+           uploadImage: {
+             server: 'api/file/UploadImage',
+             timeout: 5 * 1000, // 5s
+             fieldName: 'mingklyImage',
+             meta: {
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val(),
+                },
+             metaWithUrl: false, // 参数拼接到 url 上
+             headers: { Accept: 'text/x-json' },
+             maxFileSize: 10 * 1024 * 1024, // 10M
+             base64LimitSize: 5 * 1024, // 5kb 以下插入 base64
+
+             onBeforeUpload(files) {
+                   console.log('onBeforeUpload', files)
+                   return files // 返回哪些文件可以上传
+             },
+             onProgress(progress) {
+                   console.log('onProgress', progress)
+             },
+             onSuccess(file, res) {
+                   console.log('onSuccess', file, res)
+             },
+             onFailed(file, res) {
+                   alert(res.message)
+                  console.log('onFailed', file, res)
+             },
+             onError(file, err, res) {
+                  alert(err.message)
+                  console.error('onError', file, err, res)
+             },
+           },
+           editImage:{
+               OnUpdateImage(img){
+                   console.log(img);
+               }
+           }
+         },
+         onChange(editor) {
+            var html=window.editor.getHtml();
+            document.getElementById("ArticleToUpdate_Texts").value=html;
+            console.log(html);
+         },
+      }
+    });
+
+
+     window.toolbar = E.createToolbar({
+       editor,
+       selector: '#toolbar-container',
+       config: {
+        excludeKeys:[
+            "group-video",
+            "fullScreen",
+        ]
+       }
+     })
+      document.onload=function(){
+            var html=window.editor.getHtml();
+            document.getElementById("ArticleToUpdate_Texts").value=html;
+      }
+
+
+</script>
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+@section Scripts {
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+}
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+此文件由 Web 项目的发布/打包过程使用。可以通过编辑此 MSBuild 文件
+自定义此过程的行为。为了解与此相关的更多内容，请访问 https://go.microsoft.com/fwlink/?LinkID=208121。 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <History>True|2022-06-18T08:42:04.3514166Z;True|2022-06-11T20:24:11.0432962+08:00;True|2022-06-11T20:08:37.1719189+08:00;True|2022-06-11T20:07:45.8337378+08:00;True|2022-04-14T16:32:59.1772036+08:00;True|2022-04-14T15:19:56.3778355+08:00;True|2022-04-14T15:13:39.3370334+08:00;</History>
+    <_PublishTargetUrl>D:\网站</_PublishTargetUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="DefaultConnection">
+      <Value>Server=47.101.38.164%3bDatabase=Article%3bUser ID=sa%3bpassword=MINGming1998%3bTrusted_Connection=false%3bMultipleActiveResultSets=true</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

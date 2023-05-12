@@ -1,0 +1,29 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.UserSecurityModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.UserSecurity;
+}
+<div class="col-auto mt-3">
+    <div class="p-1">重置密码</div>
+    <div id="reset">
+        <form method="post" asp-page-handler="ResetPassword">
+            <div class="form-group">
+                <label asp-for="ThisUser.CurrentPassword"></label>
+                <input type="text" asp-for="ThisUser.CurrentPassword" class="form-control" />
+                <span class="text-danger" asp-validation-for="ThisUser.CurrentPassword"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ThisUser.ConfirmPassword"></label>
+                <input type="text" asp-for="ThisUser.ConfirmPassword" class="form-control" />
+                <span class="text-danger" asp-validation-for="ThisUser.ConfirmPassword"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ThisUser.Password"></label>
+                <input type="text" asp-for="ThisUser.Password" class="form-control" />
+                <span class="text-danger" asp-validation-for="ThisUser.Password"></span>
+            </div>
+            <input type="submit" class="btn btn-primary" value="修改密码" />
+        </form>
+    </div>
+</div>

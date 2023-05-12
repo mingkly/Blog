@@ -1,0 +1,12 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyFavouriteModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyFavourite;
+}
+<style>
+    img {
+        width: 100%;
+    }
+</style>
+<p>我的收藏</p>
+<partial name="ArticlePartial/ArticleCardsSimple" for="@Model.ArticleViews" />

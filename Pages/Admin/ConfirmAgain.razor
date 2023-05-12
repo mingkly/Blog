@@ -1,0 +1,40 @@
+﻿@implements ICancelable
+@if (!Show)
+{
+ <button class=@buttonClass @onclick=@(e=>Show=!Show)>
+    @ToggleButton
+ </button>
+}
+else
+{
+<CascadingValue Value=this>
+    <div class="card screen-center" >
+       <div class="card-header">
+              @Title
+           <CancelButton ButtonClass="btn btn-close ">X</CancelButton>
+       </div>
+       <div class="card-footer">
+           <span @onclick=@(e=>Cancel())>
+               @Target
+           </span>
+       </div>
+    </div>
+</CascadingValue>
+    
+}
+@code {
+    [Parameter]
+    public RenderFragment ToggleButton{ get; set; }
+    [Parameter]
+    public string buttonClass { get; set; }
+    [Parameter]
+    public RenderFragment Target{ get; set; }
+   [Parameter]
+    public RenderFragment Title{ get; set; }
+    bool Show;
+    public void Cancel()
+    {
+        Show = false;
+        StateHasChanged();
+    }
+}

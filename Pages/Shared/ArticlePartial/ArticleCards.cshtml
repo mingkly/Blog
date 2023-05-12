@@ -1,0 +1,22 @@
+﻿
+@using MyWeb.Pages
+@model IEnumerable<ArticleView> 
+<form></form>
+<style>
+    img {
+        width:100%;
+    }
+</style>
+<div id="articleList" class="row  ">
+@foreach (var item in Model)
+{
+   <partial name="ArticlePartial/ArticleViewCard" for="@item" />
+}
+
+</div>
+
+    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Administrator))
+    {
+       <partial name="ArticlePartial/ExamineModal" />
+       <script src="~/js/Secret.js"></script>
+    }

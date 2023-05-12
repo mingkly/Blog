@@ -1,0 +1,18 @@
+﻿@model ArticleView
+           
+@{
+    var item = Model;
+}
+<div name="all">
+    <div class="row ">
+         <div name="cover" class="col-md-3 ">
+             <partial name="ArticlePartial/ArticleCover" for="@item" />
+             <div class="row  border ">
+                <partial name="ArticlePartial/ArticleVoteBarSimple" for="@item" /> 
+             </div>
+         </div>
+         <div name="mainText" class="col-md-5 ">
+             <partial name="ArticlePartial/ArticleContent" for="@item" />
+         </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+﻿@typeparam TItem
+<table class="col-md-12">
+    <tbody>
+        @if (Items != null)
+        {
+            @foreach (var li in Items)
+            {
+                <tr>
+                    @Item(li)
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@code {
+    [Parameter]
+    public IEnumerable<TItem> Items { get; set; }
+    [Parameter]
+    public RenderFragment<TItem> Item { get; set; }
+}

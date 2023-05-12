@@ -1,0 +1,19 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model ArticleView
+@{
+    var item = Model;
+}
+@if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Administrator))
+{
+    <div class="col-auto form-inline border-secondary">
+        <button class="btn btn-primary" data-target="#examine" data-toggle="modal" onclick="modalValueSet(@item.Id,0)">通过</button>
+        <button class="btn btn-danger" data-target="#examine" data-toggle="modal" onclick="modalValueSet(@item.Id,1)">拒绝</button>
+        @if (User.IsInRole(RoleNames.Administrator))
+        {
+            <button class="btn btn-warning" data-target="#examine" data-toggle="modal" onclick="modalValueSet(@item.Id,2)">删除</button>
+        }
+        <div id="@(item.Id+"state")" class="col-auto">@item.State</div>
+    </div>
+}

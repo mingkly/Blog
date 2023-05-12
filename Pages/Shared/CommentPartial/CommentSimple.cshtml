@@ -1,0 +1,19 @@
+﻿@model CommentView
+@{
+    var comment = Model;
+    var replyUser = new UserInfoView { Name = comment.ReplyToCommentUserName, ShowAvatar = false };
+}
+<div class="card ">
+    <div class="card-header">
+        <a asp-page="/Articles/Details" asp-route-id="@comment.ReplyToArticleId">原文章</a>
+        <partial name="UserInfoPartial/UserAvatar" for="@replyUser" />
+        <span>@comment.Time</span>
+        @if (comment.NotReaded)
+        {
+            <span onclick="this.remove()" class="badge  rounded-circle bg-danger mt-0 ml-0">&nbsp;&nbsp;</span>
+        }
+    </div>
+    <div class="card-body">
+        @comment.Text
+    </div>
+</div>

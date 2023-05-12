@@ -1,0 +1,8 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyFansModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyFans;
+}
+<p>我的粉丝</p>
+
+    <partial for="@Model.MyFans" name="_userPartial" />

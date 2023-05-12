@@ -1,0 +1,8 @@
+﻿<NavLink href=@("UserInfo/NormalUserInfo?userName="+UserName) target="_blank">@(ChildContent is null?UserName:ChildContent)</NavLink>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    [Parameter]
+    public string UserName{ get; set; }
+}

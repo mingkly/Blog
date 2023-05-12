@@ -1,0 +1,8 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyFollowModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyFollow;
+}
+<p>我的关注</p>
+
+<partial for="@Model.MyFollows" name="_userPartial" />

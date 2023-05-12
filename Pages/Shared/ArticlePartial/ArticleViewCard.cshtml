@@ -1,0 +1,26 @@
+﻿@model ArticleView
+
+
+
+<div name="all" class="card col-4 ">
+
+    <div class="card-body ">
+        <a id="articleHref1" asp-page="/Articles/Details" asp-route-Id="@Model.Id" class="border-secondary">
+            <p>@Model.Title</p>
+        </a>
+
+        <div class="row">
+            <span>@Model.CreateTime</span>
+            <a id="author" class="col-auto" asp-page="/UserInfo/NormalUserInfo" asp-route-userName="@Model.AuthorName">
+                @Model.AuthorName
+            </a>
+        </div>
+        <partial name="ArticlePartial/ArticleCover" for="@Model" />
+        @{
+            /*
+        <partial name="ArticlePartial/ArticleVoteBar" for="@Model" />
+        <a class="btn btn-primary" asp-page="/Articles/ExamineTargetArticle" asp-route-id="@Model.Id">审核页面</a>
+            */
+        }
+    </div>
+</div>

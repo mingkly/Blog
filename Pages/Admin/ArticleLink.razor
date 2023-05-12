@@ -1,0 +1,8 @@
+﻿<NavLink href=@("Articles/Details?id="+Id) target="_blank">@ChildContent</NavLink>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    [Parameter]
+    public long Id{ get; set; }
+}

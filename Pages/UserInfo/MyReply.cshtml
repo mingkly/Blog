@@ -1,0 +1,26 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyReplyModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyReply;
+}
+<p>回复</p>
+@foreach (var comment in Model.Replys)
+{
+    <partial name="CommentPartial/CommentReply" for="@comment" />
+}
+<script>
+    var lastReply;
+    var lastButton
+    function Reply(id,bt) {
+        var reply =$(bt).next().get(0);
+        if (lastReply != null) {
+            lastReply.style.display = 'none';
+            lastButton.style.display = 'block';
+        }
+        var button = bt;
+        button.style.display = 'none';
+        reply.style.display = 'block';
+        lastReply=reply;
+        lastButton=button;
+    }
+</script>

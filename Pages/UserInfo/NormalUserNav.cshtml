@@ -1,0 +1,16 @@
+﻿@using System.Text.RegularExpressions
+@{
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    var name = Context.Request.Query["userName"];
+}
+<div>
+    <div class="col-md-3">
+        <ul class="nav nav-pills flex-row">
+            <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.UserMainPageActive(ViewContext)" asp-page="NormalUserInfo" asp-route-userName="@name">主页</a></li>
+            <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.UserArticlesActive(ViewContext)" asp-page="UserArticles" asp-route-userName="@name">文章</a></li>
+        </ul>
+    </div>
+    <div class="col-md-9">
+        @RenderBody()
+    </div>
+</div>

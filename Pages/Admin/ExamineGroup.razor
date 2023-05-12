@@ -1,0 +1,36 @@
+﻿@foreach (var examine in ExamineTypes)
+{
+    <ConfirmAgain buttonClass=@GetStyle((int)examine)>
+        <ToggleButton>
+            @examine.ToString()
+        </ToggleButton>
+        <Title>
+            @($"确认{examine.ToString()}吗？")
+        </Title>
+        <Target>
+            <button class=@GetStyle((int)examine) @onclick=@(async e=>await Examine.Examine((int)examine))>@examine.ToString()</button>
+            <CancelButton ButtonClass="btn btn-danger">取消</CancelButton>
+        </Target>
+    </ConfirmAgain>
+}
+@code {
+    [Parameter]
+    public IExamine Examine { get; set; }
+    [Parameter]
+    public IEnumerable<ExamineType> ExamineTypes { get; set; }
+    string GetStyle(int action)
+    {
+        if (action == 0)
+        {
+            return "btn btn-success";
+        }
+        else if (action == 1)
+        {
+            return "btn btn-warning";
+        }
+        else
+        {
+            return "btn btn-danger";
+        }
+    }
+}

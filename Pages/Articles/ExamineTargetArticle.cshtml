@@ -1,0 +1,24 @@
+﻿@page
+@model MyWeb.Pages.Articles.ExamineTargetArticleModel
+@{
+}
+<form></form>
+<div>
+    <img class="ArticleCover" src="@Model.ArticleView.Cover" />
+</div>
+<p>
+    @Model.ArticleView.Title
+</p>
+<div>
+    <span>@Model.ArticleView.AuthorName</span>
+    <a asp-page="/UserInfo/NormalUserInfo" asp-route-userName="@Model.ArticleView.AuthorName" >
+        @Html.DisplayFor(model => model.ArticleView.AuthorName)   
+   </a>
+</div>
+<div>
+    @Html.Raw(Model.ArticleView.Texts)
+</div>
+
+<partial name="ArticlePartial/ArticleExamine" for="@Model.ArticleView" />
+<partial name="ArticlePartial/ExamineModal" />
+<script src="~/js/Secret.js"></script>

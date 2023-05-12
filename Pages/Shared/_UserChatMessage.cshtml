@@ -1,0 +1,35 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model UserChatMessageView
+@{
+    string align;
+    if (Model.IsCurrentUser)
+    {
+        align = "float-right";
+    }
+    else
+    {
+        align = "float-left";
+    }
+}
+
+<div class="card row" id=@Model.ViewId>
+    <div class="card-header col-auto @align">
+        @if (String.IsNullOrEmpty(Model.Avatar))
+        {
+            <img class="@align" src="~/images/avatar.jpg" />
+        }
+        else
+        {
+            <img class="@align" src="~/@Model.Avatar" />
+        }
+        <span id="@Model.Name" class="@align">@Model.Name :</span>
+        <div class="@align col-5">
+            <span class="text-left @align">@Model.Message</span>
+        </div>
+    </div>
+</div>
+
+
+

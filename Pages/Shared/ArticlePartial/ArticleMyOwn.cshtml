@@ -1,0 +1,36 @@
+﻿@model ArticleView
+
+@{
+    var item = Model;
+}
+@{
+    var show = "";
+    var state = "";
+    var editText = "";
+    if (item.State == ArticleState.Rejected)
+    {
+        state = "退回";
+        show = "none";
+        editText = "修改";
+    }
+    else if (item.State == ArticleState.Submit)
+    {
+        state = "审核中";
+        show = "none";
+    }
+}
+<div name="all">
+    <div class="row ">
+        <div name="cover" class="col-md-3 ">
+            <partial name="ArticlePartial/ArticleCover" for="@item" />
+            <div id="approve" class="row  border " style="display:@show">
+                <partial name="ArticlePartial/ArticleVoteBarSimple" for="@item" />
+            </div>
+            <div id="submit">@state</div>
+            <a asp-page="/Articles/Edit" asp-route-id="@item.Id" id="edit">@editText</a>
+        </div>
+        <div name="mainText" class="col-md-5 ">
+            <partial name="ArticlePartial/ArticleContent" for="@item" />
+        </div>
+    </div>
+</div>

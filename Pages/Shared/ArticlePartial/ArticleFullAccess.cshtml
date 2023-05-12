@@ -1,0 +1,18 @@
+﻿@model ArticleView
+           
+@{
+    var item = Model;
+}
+
+<div name="all">
+    <div class="row ">
+         <div name="cover" class="col-md-3 ">
+             <partial name="ArticlePartial/ArticleCover" for="@item" />
+             <partial name="ArticlePartial/ArticleVoteBar" for="@item" />
+         </div>
+         <div name="mainText" class="col-md-5 ">
+             <partial name="ArticlePartial/ArticleContent" for="@item" />
+            <a class="btn btn-primary" asp-page="/Articles/ExamineTargetArticle" asp-route-id="@item.Id">审核页面</a>
+         </div>
+    </div>
+</div>

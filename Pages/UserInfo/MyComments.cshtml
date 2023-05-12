@@ -1,0 +1,7 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyCommentsModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyComments;
+}
+<p>我的评论</p>
+<partial name="CommentPartial/CommentListSimple" for="@Model.Comments" />

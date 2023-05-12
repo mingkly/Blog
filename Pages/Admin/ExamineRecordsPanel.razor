@@ -1,0 +1,32 @@
+﻿<NavBarPage Verticle=true>
+<NavLinkMine Name="文章">
+   <TableList Items=Articles >
+       <Item>
+           <ArticleExamine ArticleView=context></ArticleExamine>
+       </Item>
+   </TableList>
+</NavLinkMine>
+<NavLinkMine Name="评论">
+   <TableList Items=Comments>
+       <Item>
+           <CommentExamine CommentView=context></CommentExamine>
+       </Item>
+   </TableList>
+</NavLinkMine>
+<NavLinkMine Name="用户">
+   <TableList Items=Users>
+       <Item>
+           <UserExamine UserInfoView=context></UserExamine>
+       </Item>
+   </TableList>
+</NavLinkMine>
+</NavBarPage>
+@code {
+    [Parameter]
+    public List<ArticleView> Articles { get; set; }
+    [Parameter]
+    public List<CommentView> Comments{ get; set; }
+    [Parameter]
+    public List<UserInfoView> Users{ get; set; }
+
+}

@@ -1,0 +1,12 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model ArticleView
+@{
+}
+@{
+    var src = string.IsNullOrEmpty(Model.Cover) ? "~/images/cover.jpg" : Model.Cover;
+}
+<a id="articleHref1" asp-page="/Articles/Details" asp-route-Id="@Model.Id" class="border-secondary">
+    <img id="cover" src="@src" class="ArticleCover" />
+</a>

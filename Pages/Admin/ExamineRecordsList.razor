@@ -1,0 +1,45 @@
+﻿@if (Records.Count() > 0)
+{
+    <div class="col-md-12 row border border-success">
+        @foreach (var record in Records)
+        {
+            <div class="col-md-4 border border-primary">
+                <div class="col-auto">
+                    @record.Examiner.Name
+                </div>
+                <div class="col-auto">
+                    @GetState(record.Action)
+                </div>
+                <div class="col-auto">
+                    @record.Time
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public IEnumerable<ExamineRecordView> Records { get; set; }
+    string GetState(int action)
+    {
+        if (action == 2)
+        {
+            return "删除";
+        }
+        if (action == 0)
+        {
+            return "通过";
+        }
+        if (action == 1)
+        {
+            return "拒绝";
+        }
+        if (action == 3)
+        {
+            return "恢复";
+        }
+        return "";
+    }
+}

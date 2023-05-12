@@ -1,0 +1,20 @@
+﻿@using MyWeb.Pages
+@model IEnumerable<ArticleView>
+<form></form>
+<style>
+    img {
+        width: 100%;
+    }
+</style>
+<table class="table">
+    <tbody id="articleList">
+        @foreach (var item in Model)
+        {
+            <tr id="@(item.Id+"tr")">
+                <td>
+                    <partial name="ArticlePartial/ArticleFullAccess" for="@item">
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

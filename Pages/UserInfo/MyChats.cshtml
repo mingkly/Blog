@@ -1,0 +1,40 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyChatsModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.Chats;
+}
+<style>
+    img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: block
+    }
+</style>
+<div>
+    @foreach (var c in Model.Chats)
+    {
+        var p = new UserChatMessageView
+                {
+                    IsCurrentUser = false,
+                    Avatar = c.Avatar,
+                    Message = c.firstMsg,
+                    Name = c.userName
+                };
+        <a asp-page="ChatWithUser" asp-route-name="@c.userName">
+            <partial for=@p name="_UserChatMessage" />
+        </a>
+    }
+</div>
+<script>
+    $(function(){
+            console.log(chatCountsArray);
+        if(chatCountsArray!=undefined){
+
+           for(x in chatCountsArray){
+               console.log(x);
+               $("#"+x).append($span.clone().html(chatCountsArray[x]));
+           }
+        }
+    })
+</script>

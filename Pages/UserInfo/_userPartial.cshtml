@@ -1,0 +1,53 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model IEnumerable<UserViewModel>
+@{
+
+}
+<form method="post"></form>
+@foreach (var f in Model)
+{
+    string follow = "";
+    if (f.CurrentUserFollowed)
+    {
+        follow = "取消关注";
+    }
+    else
+    {
+        follow = "关注";
+    }
+    <div class="card">
+        <div class="card-header">
+            <img id="avatar" src="~/@f.Avatar" class="rounded-circle" style="width:70px;height:70px;" />
+            <a asp-page="./NormalUserInfo" asp-route-userName="@f.Name">
+                @f.Name
+            </a>
+            <button class="btn btn-primary float-right" onclick="Follow(this,'@f.Name')">@follow</button>
+        </div>
+    </div>
+}
+<script>
+    async function Follow(btn, name) {
+        var res = await fetch("api/User/FollowUser", {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                'content-type': 'application/json',
+                'accept': 'application/json'
+            },
+            body: JSON.stringify({
+                Name: name
+            })
+        })
+        if (res.ok) {
+            var json = await res.json();
+            if (json.id == 1) {
+                btn.innerHTML = '取消关注';
+            }
+            else if(json.id==0){
+                btn.innerHTML = '关注';
+            }
+        }
+    }
+</script>

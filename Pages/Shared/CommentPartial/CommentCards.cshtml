@@ -1,0 +1,26 @@
+﻿@using MyWeb.Pages
+@model Dictionary<CommentView,List<CommentView>>
+
+@foreach (var c in Model)
+{
+    <div class="card border border-success mb-1 col-7">
+        <partial name="CommentPartial/CommentFullAccess" for="@c.Key" />
+        @if (c.Value.Count != 0)
+        {
+            <div class="card-body">
+                @foreach (var cc in c.Value)
+                {
+                    <partial name="CommentPartial/InnerCommentSimple" for="@cc" />
+                }
+                @if (c.Value.Count == 3)
+                {
+                    <button id="loadInnerBtn" class="btn-primary" onclick="LoadMoreInnerComment('@c.Key.Id','@c.Value.Last().Id',this.parent,this)"  >加载更多评论</button>
+                }
+            </div>
+        }
+    </div>
+}
+@if (User.IsInRole(RoleNames.Administrator))
+{
+    <script src="~/js/Secret.js"></script>
+}

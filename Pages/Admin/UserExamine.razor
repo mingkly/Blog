@@ -1,0 +1,262 @@
+﻿@implements IExamine
+@{
+    var bg = String.IsNullOrEmpty(UserInfoView.Background) ? "/images/cover.jpg" : UserInfoView.Background;
+    var avatarSrc = string.IsNullOrEmpty(UserInfoView.Avatar) ? "/images/daxiong.gif" : UserInfoView.Avatar;
+    var examineTypes = new List<ExamineType>
+    {
+       ExamineType.通过,
+       ExamineType.拒绝,
+       ExamineType.封禁,
+    };
+}
+<style>
+
+</style>
+<div class="col-auto row">
+    <div class="col-2">
+        <img src="@avatarSrc" class="avatar avatar-up" />
+        <div>
+            @UserInfoView.Name
+        </div>
+        <div>
+            @UserInfoView.ShowText
+        </div>
+        <div>
+            @UserInfoView.PhoneNumber
+        </div>
+        <div>
+            @UserInfoView.UserState
+        </div>
+    </div>
+    <div class="col-8">
+        <img src="@bg" class="background" />
+    </div>
+</div>
+<div class="row">
+    @if (UserInfoView.UserState == UserState.Baned)
+    {
+        <ConfirmAgain buttonClass="btn btn-success">
+            <ToggleButton>
+                解封
+            </ToggleButton>
+            <Title>
+                @($"确认解封吗？")
+            </Title>
+            <Target>
+                <button class="btn btn-success" @onclick=@Recover>解封</button>
+                <CancelButton ButtonClass="btn btn-danger">取消</CancelButton>
+            </Target>
+        </ConfirmAgain>
+
+    }
+    else
+    {
+        <label>理由</label>
+        <input class="form-control" type="text" @bind-value=NotifyText />
+        <ExamineGroup Examine=this ExamineTypes=@examineTypes></ExamineGroup>
+    }
+
+</div>
+<ExamineRecordsList Records=UserInfoView.ExamineRecords></ExamineRecordsList>
+@code {
+    [CascadingParameter]
+    public ApplicationDbContext AppContext { get; set; }
+    [CascadingParameter]
+    public SecretProvider SecretProvider { get; set; }
+    [CascadingParameter]
+    public AdminPanel DataSource { get; set; }
+    string NotifyText;
+    [Parameter]
+    public UserInfoView UserInfoView { get; set; }
+    public async Task Examine(int action)
+    {
+        try
+        {
+            if (action == 3)
+            {
+                await ExamineUser(2);
+            }
+            else
+            {
+                await ExamineUser(action);
+            }
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+    async Task ExamineUser(int action)
+    {
+        var user = await AppContext.Users.IgnoreQueryFilters().Include(u => u.Articles).Include(u => u.Comments).SingleOrDefaultAsync(u => u.UserName == UserInfoView.Name);
+        if (user == null)
+        {
+            DataSource.Error("不存在用户");
+            return;
+        }
+        if (action == 0)
+        {
+            user.UserState = UserState.Confirmed;
+        }
+        else if (action == 1)
+        {
+            user.UserState = UserState.UnConfirmed;
+        }
+        else if (action == 2)
+        {
+            user.UserState = UserState.Baned;
+            AppContext.RemoveRange(user.Articles);
+            AppContext.RemoveRange(user.Comments);
+        }
+        var record = new ExamineRecord
+            {
+                ExaminerId = DataSource.UserId,
+                UserId = user.Id,
+                Action = action,
+                Time = DateTime.Now,
+            };
+        var notify = MingklyHelpers.GetNotify(action, user, NotifyText, SecretProvider);
+        await AppContext.ExamineRecords.AddAsync(record);
+        await AppContext.SystemNotifies.AddAsync(notify);
+        await AppContext.SaveChangesAsync();
+        DataSourceChange(record, action);
+        DataSource.Refresh();
+        await InvokeAsync(StateHasChanged);
+    }
+    void DataSourceChange(ExamineRecord record, int action)
+    {
+        var target = DataSource.Users.SingleOrDefault(a => a.Name == UserInfoView.Name);
+        DataSource.Users.Remove(target);
+        var targetExamined = DataSource.ExaminedUsers.SingleOrDefault(a => a.Name == UserInfoView.Name);
+        var examineRecord = new ExamineRecordView
+            {
+                Examiner = new UserInfoView
+                {
+                    Name = DataSource.UserName,
+                },
+                Action = record.Action,
+                Time = record.Time,
+            };
+        if (target != null)
+        {
+            if (target.ExamineRecords == null)
+            {
+                target.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                target.ExamineRecords.Add(examineRecord);
+            }
+            SetState(target, action);
+        }
+        if (targetExamined != null)
+        {
+            if (targetExamined.ExamineRecords == null)
+            {
+                targetExamined.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                targetExamined.ExamineRecords.Add(examineRecord);
+            }
+            SetState(targetExamined, action);
+            if (action == 2)
+            {
+                DataSource.BanedUsers.Add(targetExamined);
+            }
+        }
+        else
+        {
+            DataSource.ExaminedUsers.Add(target);
+            DataSource.BanedUsers.Add(target);
+        }
+    }
+    void SetState(UserInfoView user, int action)
+    {
+        if (action == 0)
+        {
+            user.UserState = UserState.Confirmed;
+        }
+        else if (action == 1)
+        {
+            user.UserState = UserState.UnConfirmed;
+        }
+        else if (action == 2)
+        {
+            user.UserState = UserState.Baned;
+        }
+    }
+    async Task DeleteReal()
+    {
+        try
+        {
+            var user = await AppContext.Users
+            .IgnoreQueryFilters()
+            .Include(a => a.Comments)
+            .Include(a => a.FavouriteUser)
+            .Include(a => a.Articles)
+            .Include(a => a.Favourites)
+            .Include(a => a.BeExaminedRecords)
+            .SingleAsync(a => a.UserName == UserInfoView.Name);
+            AppContext.RemoveRange(user.FavouriteUser);
+            AppContext.RemoveRange(user.Articles);
+            AppContext.RemoveRange(user.BeExaminedRecords);
+            AppContext.RemoveRange(user.Comments);
+            AppContext.Remove(user);
+            await AppContext.SaveChangesAsync();
+            var target = DataSource.Users.SingleOrDefault(a => a.Name == UserInfoView.Name);
+            DataSource.ExaminedUsers.Remove(target);
+            var target2 = DataSource.BanedUsers.SingleOrDefault(a => a.Name == UserInfoView.Name);
+            DataSource.BanedUsers.Remove(target2);
+
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+    async Task Recover()
+    {
+        try
+        {
+            var user = await AppContext.Users
+            .IgnoreQueryFilters()
+            .SingleAsync(a => a.UserName == UserInfoView.Name);
+            user.UserState = UserState.UnConfirmed;
+            var record = new ExamineRecord
+                {
+                    ExaminerId = DataSource.UserId,
+                    UserId = user.Id,
+                    Action = 3,
+                    Time = DateTime.Now,
+                };
+            await AppContext.ExamineRecords.AddAsync(record);
+            await AppContext.SaveChangesAsync();
+            var recordView = new ExamineRecordView
+                {
+                    Examiner = new UserInfoView
+                    {
+                        Name = DataSource.UserName,
+                    },
+                    Action = record.Action,
+                    Time = record.Time,
+                };
+            var target = DataSource.ExaminedUsers.SingleOrDefault(a => a.Name == UserInfoView.Name);
+            DataSource.ExaminedUsers.Remove(target);
+            var target2 = DataSource.BanedUsers.SingleOrDefault(a => a.Name == UserInfoView.Name);
+            DataSource.BanedUsers.Remove(target2);
+            target2.ExamineRecords.Add(recordView);
+            DataSource.Users.Add(target2);
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+}

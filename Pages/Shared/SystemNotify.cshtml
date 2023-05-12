@@ -1,0 +1,19 @@
+﻿@model SystemNotify
+@{
+}
+<div class="card">
+    <div class="card-header">
+        @Model.Title
+        @if (Model.Time > Model.Time)
+        {
+            <span onclick="this.remove()" class="badge  rounded-circle bg-danger mt-0 ml-0">&nbsp;&nbsp;</span>
+        }
+        <div>
+            @Model.Text
+            <span>@Model.Time</span>
+        </div>
+    </div>
+    <div class="card-body">
+        @Html.Raw(Model.Action)
+    </div>
+</div>

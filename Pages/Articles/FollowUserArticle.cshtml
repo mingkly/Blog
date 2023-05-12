@@ -1,0 +1,117 @@
+﻿@page
+@model MyWeb.Pages.Articles.FollowUserArticleModel
+@{
+}
+<style>
+    img {
+        width:100%;
+    }
+</style>
+<table style="display:none">
+                <tr id="temp">
+                    <td>
+            @{
+                var a = new ArticleView();
+            }
+                      <partial name="ArticlePartial/ArticleFullAccess" for="@a">
+                    </td>
+                </tr>
+</table>
+<partial for="@Model.Articles" name="ArticlePartial/ArticleCardsWithVote" />
+    <form id="loadListForm" method="post" asp-controller="Articles" asp-action="LoadMoreFavourite">
+        <input type="hidden" id="PageJump" name="PageJump" value="1" />
+        <input type="hidden" id="PageCount" name="PageCount" value="3" />
+         @if (Model.Articles != null && Model.Articles.Count() > 0)
+         {
+          <input type="hidden" id="Number" name="Number" value="@Model.Articles.Last().Id" />     
+         }
+    </form>
+    <div id="loadView" style="display:none" ><span class="spinner-border text-muted"></span><span id="loadViewText"></span></div>
+<script>
+
+
+    var hasMore;
+    var loading=false;
+    async function LoadMore(){
+        loading=true;
+        var form=document.getElementById("loadListForm");
+        var formData=new FormData(form);
+        var res=await fetch(form.action,{
+            method:"POST",
+            headers:{
+            },
+            body:formData         
+        });
+        if(res.ok){
+            var json=await res.json();
+            console.log(json);
+            if(json.id==0){
+                $.each(json.articleViews,function (key,value){
+                    $("#title").html(value.title);
+                    $("#texts").html(value.texts);
+                    $("#time").html(value.createTime);
+                    $("#viewcount").html(value.viewCount);
+                    $("#upcount").html(value.voteUpNumber);
+                    $("#downcount").html(value.voteDownNumber);
+                    if(value.currentUserAction>0){
+                       $("#voteUp").attr("class",$("#voteUp").attr("class")+"VoteUpActive");
+                    }
+                    else if(value.currentUserAction<0){
+                       $("#voteDown").attr("class",$("#voteDown").attr("class")+"VoteDownActive");
+                    }
+                    $("#author").attr("href","/UserInfo/NormalUserInfo?userName="+value.authorName);
+                    $("#author").html(value.authorName);        
+                    $("#voteUp").attr("onclick","Vote(1,"+value.id+",this)");
+                    $("#voteDown").attr("onclick","Vote(-1,"+value.id+",this)");
+                    $("#articleHref1").attr("href","/articles/details?id="+value.id);
+                    $("#articleHref2").attr("href","/articles/details?id="+value.id);
+                    if(value.cover!=null|""){
+                        $("#cover").attr("src",value.cover);
+                    }
+                    var cl=$("#temp").clone(true);
+                    $("#articleList").append(cl);
+                    console.log(value);
+                })
+                 $("#Number").val(json.number);
+                 $("#loadView").css("display","none");
+            }
+            else{
+                hasMore="none";
+                $("#loadViewText").html("没有更多了");
+                setInterval(function(){
+                  $("#loadView").css("display","none");
+                  clearInterval();
+               },2000);
+               $("#loadView").children().first().css("display","none");
+            }
+        }
+        loading=false;
+   }
+   $(function(){
+       window.addEventListener("scroll",scrollLoad);
+   })
+   
+   function scrollLoad(){
+       var clientHeight=window.screen.availHeight;
+       var scrollHeight=$(window).scrollTop();
+       var totalHeight=document.body.scrollHeight;
+       console.log(clientHeight);
+       console.log(scrollHeight);
+       console.log(totalHeight);
+       if(totalHeight<=clientHeight+scrollHeight){
+           if(hasMore=="none"){
+               return;
+           }
+           else{
+
+               if(!loading){
+                $("#loadViewText").html("加载中");
+                $("#loadView").css("display","block");
+                 LoadMore();
+               }
+
+           }
+
+       }
+   }
+</script>

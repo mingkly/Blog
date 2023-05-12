@@ -1,0 +1,321 @@
+﻿@page "/adminPanel"
+
+@attribute [Authorize(Roles = "admin")]
+@inject ApplicationDbContext AppContext
+@inject SecretProvider _secretProvider
+
+<h3>AdminPanel</h3>
+@{
+
+}
+<div>
+    @errorMsg
+</div>
+<CascadingValue Value=AppContext>
+    <CascadingValue Value=_secretProvider>
+        <CascadingValue Value=this>
+            <NavBarPage>
+                <NavLinkMine Name="文章">
+                    <TableList Items=Articles>
+                        <Item>
+                            <ArticleExamine ArticleView=context></ArticleExamine>
+                        </Item>
+                    </TableList>
+                </NavLinkMine>
+                <NavLinkMine Name="评论">
+                    <TableList Items=Comments>
+                        <Item>
+                            <CommentExamine CommentView=context></CommentExamine>
+                        </Item>
+                    </TableList>
+                </NavLinkMine>
+                <NavLinkMine Name="用户">
+                    <TableList Items=Users>
+                        <Item>
+                            <UserExamine UserInfoView=context></UserExamine>
+                        </Item>
+                    </TableList>
+                </NavLinkMine>
+                <NavLinkMine Name="历史">
+                    <ExamineRecordsPanel Articles=@ExaminedArticles Comments=@ExaminedComments Users=@ExaminedUsers></ExamineRecordsPanel>
+                </NavLinkMine>
+                <NavLinkMine Name="已删除">
+                    <DeleteManager></DeleteManager>
+                </NavLinkMine>
+            </NavBarPage>
+        </CascadingValue>
+    </CascadingValue>
+</CascadingValue>
+
+@code {
+    public List<ArticleView> Articles { get; set; }
+    public List<CommentView> Comments { get; set; }
+    public List<UserInfoView> Users { get; set; }
+    public List<ArticleView> ExaminedArticles { get; set; }
+    public List<CommentView> ExaminedComments { get; set; }
+    public List<UserInfoView> ExaminedUsers { get; set; }
+    public List<ArticleView> DeletedArticles { get; set; }
+    public List<CommentView> DeletedComments { get; set; }
+    public List<UserInfoView> BanedUsers { get; set; }
+    public long UserId { get; set; }
+    public string UserName { get; set; }
+    string errorMsg;
+    [CascadingParameter]
+    public Task<AuthenticationState> authenticationState { get; set; }
+    protected async override Task OnInitializedAsync()
+    {
+        var state = await authenticationState;
+        var user = await AppContext.Users
+        .IgnoreQueryFilters()
+        .Select(u => new
+        {
+            UserName = u.UserName,
+            Id = u.Id,
+            Articles = u.ExamineRecords
+            .Where(e => e.ArticleId != null)
+            .GroupBy(e => e.ArticleId)
+            .Select(e => new ArticleView()
+                {
+                    Id = _secretProvider.ProtectId(e.First().Article.Id),
+                    CreateTime = e.First().Article.CreateTime,
+                    AuthorName = e.First().Article.Author.UserName,
+                    Title = e.First().Article.Title,
+                    Texts = e.First().Article.Texts,
+                    Cover = FileHelpers.GetCoverPath(e.First().Article.Images),
+                    State = e.First().Article.State,
+                    IsDeleted = EF.Property<bool>(e.First().Article, "IsDeleted"),
+                    ExamineRecords = e.First().Article.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+                }).ToList(),
+            Comments = u.ExamineRecords
+            .Where(e => e.CommentId != null)
+            .GroupBy(e => e.CommentId)
+            .Select(e => new CommentView
+                {
+                    Id = _secretProvider.ProtectId(e.First().Comment.Id),
+                    Text = e.First().Comment.Text,
+                    Time = e.First().Comment.Time,
+                    UserName = e.First().Comment.User.Name,
+                    UserAvatar = e.First().Comment.User.Avatar,
+                    State = e.First().Comment.State,
+                    IsDeleted = EF.Property<bool>(e.First().Comment, "IsDeleted"),
+                    ReplyToCommentUserName = e.First().Comment.ReplyToComment.User.UserName,
+                    ExamineRecords = e.First().Comment.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+                }).ToList(),
+            Users = u.ExamineRecords
+            .Where(e => e.UserId != null)
+            .GroupBy(e => e.UserId)
+            .Select(e => new UserInfoView
+                {
+                    Name = e.First().User.UserName,
+                    Avatar = e.First().User.Avatar,
+                    ShowText = e.First().User.ShowText,
+                    Background = e.First().User.Background,
+                    ShowAvatar = true,
+                    UserState = e.First().User.UserState,
+                    PhoneNumber = e.First().User.PhoneNumber,
+                    ExamineRecords = e.First().User.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+                }).ToList(),
+        })
+        .SingleOrDefaultAsync(u => u.UserName == state.User.Identity.Name);
+        ExaminedUsers = user.Users;
+        ExaminedArticles = user.Articles;
+        ExaminedComments = user.Comments;
+        UserId = user.Id;
+        UserName = user.UserName;
+        Articles = await AppContext.Articles
+        .IgnoreQueryFilters()
+        .Where(a=>!EF.Property<bool>(a, "IsDeleted"))
+        .Where(a => a.State == ArticleState.Submit)
+        .OrderByDescending(a => a.Id)
+        .Select(article => new ArticleView
+            {
+                Id = _secretProvider.ProtectId(article.Id),
+                CreateTime = article.CreateTime,
+                AuthorName = article.Author.UserName,
+                Title = article.Title,
+                Texts = article.Texts,
+                Cover = FileHelpers.GetCoverPath(article.Images),
+                State = article.State,
+                ExamineRecords = article.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+        .AsNoTracking()
+        .ToListAsync();
+        Comments = await AppContext.Comments
+        .Where(c => c.State == CommentState.Submit)
+        .Select(cc => new CommentView
+            {
+                Id = _secretProvider.ProtectId(cc.Id),
+                Text = cc.Text,
+                Time = cc.Time,
+                UserName = cc.User.Name,
+                UserAvatar = cc.User.Avatar,
+                State = cc.State,
+                ReplyToCommentUserName = cc.ReplyToComment.User.UserName,
+                ExamineRecords = cc.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+                .AsNoTracking()
+                .ToListAsync();
+        Users = await AppContext.Users
+        .IgnoreQueryFilters()
+        .Where(u => u.UserState == UserState.UnConfirmed)
+        .Select(u => new UserInfoView
+            {
+                Name = u.UserName,
+                Avatar = u.Avatar,
+                ShowText = u.ShowText,
+                Background = u.Background,
+                ShowAvatar = true,
+                UserState = u.UserState,
+                PhoneNumber = u.PhoneNumber,
+                ExamineRecords = u.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+        .AsNoTracking()
+        .ToListAsync();
+        DeletedArticles = await AppContext.Articles
+        .IgnoreQueryFilters()
+        .Where(b => EF.Property<bool>(b, "IsDeleted"))
+        .OrderByDescending(a => a.Id)
+        .Select(article => new ArticleView
+            {
+                Id = _secretProvider.ProtectId(article.Id),
+                CreateTime = article.CreateTime,
+                AuthorName = article.Author.UserName,
+                Title = article.Title,
+                Texts = article.Texts,
+                Cover = FileHelpers.GetCoverPath(article.Images),
+                State = article.State,
+                IsDeleted = true,
+                ExamineRecords = article.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+        .AsNoTracking()
+        .ToListAsync();
+        DeletedComments = await AppContext.Comments
+        .IgnoreQueryFilters()
+        .Where(b => EF.Property<bool>(b, "IsDeleted"))
+        .OrderByDescending(c => c.Id)
+        .Select(cc => new CommentView
+            {
+                Id = _secretProvider.ProtectId(cc.Id),
+                Text = cc.Text,
+                Time = cc.Time,
+                UserName = cc.User.Name,
+                UserAvatar = cc.User.Avatar,
+                IsDeleted = true,
+                State = cc.State,
+                ReplyToCommentUserName = cc.ReplyToComment.User.UserName,
+                ExamineRecords = cc.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+                .AsNoTracking()
+                .ToListAsync();
+        BanedUsers = await AppContext.Users
+        .IgnoreQueryFilters()
+        .Where(u => u.UserState == UserState.Baned)
+        .OrderByDescending(u => u.Id)
+        .Select(u => new UserInfoView
+            {
+                Name = u.UserName,
+                Avatar = u.Avatar,
+                ShowText = u.ShowText,
+                Background = u.Background,
+                ShowAvatar = true,
+                UserState = UserState.Baned,
+                PhoneNumber = u.PhoneNumber,
+                ExamineRecords = u.BeExaminedRecords
+                            .Select(e => new ExamineRecordView
+                            {
+                                Examiner = new UserInfoView
+                                {
+                                    Name = e.Examiner.UserName,
+                                },
+                                Time = e.Time,
+                                Action = e.Action,
+                            }).ToList()
+            })
+        .AsNoTracking()
+        .ToListAsync();
+
+
+        await base.OnInitializedAsync();
+    }
+    public void Error(string msg)
+    {
+        errorMsg = msg;
+    }
+    public void Refresh()
+    {
+        StateHasChanged();
+    }
+
+}

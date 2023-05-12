@@ -1,0 +1,8 @@
+﻿
+@page
+@model MyWeb.Pages.UserInfo.UserArticlesModel
+@{
+    Layout = "/Pages/UserInfo/NormalUserNav.cshtml";
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.UserArticles;
+}
+<partial for="@Model.ArticleViews" name="ArticlePartial/ArticleCardsWithVote" />

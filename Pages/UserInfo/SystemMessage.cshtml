@@ -1,0 +1,8 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.SystemMessageModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.SystemMessage;
+}
+@foreach(var n in Model.Notifies){
+<partial name="SystemNotify" for="@n" />
+}

@@ -1,0 +1,82 @@
+﻿
+<!DOCTYPE html>
+<base href="~/" />
+<component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
+@{
+
+}
+<html lang="ch">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minkgly的博客</title>
+    <partial name="BootstrapAndJqueryScript" />
+
+
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Minkgly的博客</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">主页</a>
+                        </li>
+
+                        @if (User.IsInRole(RoleNames.Administrator))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Articles/Index">所有文章</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Articles/Create">新建文章</a>
+                            </li>
+                        }
+                        <li class="nav-item col-6">
+                            <form method="get" style="position:relative" asp-page="/articles/SearchResults">
+                                <div class="row " style="width:100%">
+                                    <div class="col-auto " style="padding:0px;">
+                                        <input type="text" name="word" onchange="OnSearch(this,this.value)" onblur="LeaveSeach()" id="word" style="width:100%;height:100%;" />
+                                        <ul id="searchRecord" class="searchTip nav nav-pills flex-column bg-white" style="width:100%;">
+                                        </ul>
+                                    </div>
+                                    <input type="submit" value="搜索" class="btn btn-primary col-auto" />
+                                </div>
+                            </form>
+                        </li>
+                    </ul>
+                    @if (User.IsInRole(RoleNames.Administrator))
+                    {
+                        <partial name="_LoginPartial" />
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container row">
+            <a target="_blank" href="https://beian.miit.gov.cn/?spm=a2cmq.17629970.J_9220772140.110.f0d079feV21stE#/Integrated/index">苏ICP备2022017704号</a>
+            <a target="_blank" class="row ml-4" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32083002000108" style="text-decoration:none;height:100%">
+                <p><img  src="~/images/beian.png" style="width:auto;height:20px;" /></p>
+                <p  style="color:#939393;">苏公网安备 32083002000108号</p>
+            </a>
+        </div>
+    </footer>
+    <script src="_framework/blazor.server.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

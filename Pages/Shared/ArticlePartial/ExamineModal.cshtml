@@ -1,0 +1,48 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="modal" id="examine">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="examineHeader"></span>
+                <button class="close" data-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="examineBody">
+                <input type="text" id="examineText" class="form-control" />
+                <input type="hidden" id="examineAction" />
+                <input type="hidden" id="examineId" />
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-dismiss="modal" onclick="Examine()">确认</button>
+                <button class="btn btn-danger" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function modalValueSet(id,action){
+        $("#examineId").val(id);
+        $("#examineAction").val(action);
+        var title;
+        if(action==0){
+            title="确认审核通过吗?"
+        }
+        else if(action==1){
+            title="输入拒绝理由:"
+        }
+        else if(action==2){
+            title="确认删除吗?"
+        }
+        if(action==1){
+            $("#examineBody").css("display","block")
+        }
+        else{
+            $("#examineBody").css("display","none")
+        }
+        $("#examineHeader").html(title)
+    }
+</script>

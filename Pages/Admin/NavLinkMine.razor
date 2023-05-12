@@ -1,0 +1,20 @@
+﻿@implements INavLink
+<li class="nav-item"><a class="nav-link @active" href="javascript:void(0)" @onclick=@SetActive >@Name</a></li>
+
+@code {
+    [CascadingParameter]
+    public NavBarPage NavBar{ get; set; }
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    string active =>NavBar.activrLink==this?"active":"";
+    protected override void OnInitialized()
+    {
+        NavBar.AddLink(this);
+    }
+    void SetActive()
+    {
+        NavBar.Active(this);
+    }
+}

@@ -1,0 +1,80 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div id="commentTemp" class="card border border-success mb-1 col-7">
+    <div id="outterTemp" class="card-header">
+        <div id="userAndText"  class="col-auto">
+            <a id="commentUserName" class="col-auto" href="/UserInfo/NormalUserInfo?userName={0}">
+                <img id="commentUserAvatar" src="{1}" class="avatar-sm" />
+                {0}
+            </a>
+            :
+            <span class="text-dark">{2}</span>
+        </div>
+        <div id="timeAndVote" class="row">
+            <div class="col-auto ml-3">----{0}</div>
+            <div class="col-auto">
+                <button id="voteUp" class="VoteUp VoteUp-sm {1}" onclick="VoteC(1,'{2}',this)"></button>
+                <span id="upcount" class="text-center">{3}</span>
+            </div>
+            <div class="col-auto">
+                <button id="voteDown" class="VoteDown VoteDown-sm {4}" onclick="VoteC(-1,'{2}',this)"></button>
+                <span id="downcount" class="text-center">{5}</span>
+            </div>
+
+                <button class="btn btn-danger btn-sm col-auto" onclick="deleteComment({2},this)">删除</button>
+
+            <button id="Reply" class="btn btn-sm btn-primary" onclick="Reply('{2}',this)">回复</button>
+            <div id="commentDiv" class="ml-3" style="display:none;height:auto;width:100%;">
+                <form name="comment" id="comment" method="post" asp-page="/Articles/Details">
+                    <textarea class="form-control" name="Text" rows="3"></textarea>
+                    <span name="Text"></span>
+                    <input class="btn btn-primary" formaction="/Articles/Details?commentId={2}"  type="submit" value="回复" />
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="innerList" class="card-body" style="display:none">
+        <div id="innerComments" style="display:none">
+            <div id="userAndText2" class="col-auto">
+                <a id="commentUserName" class="col-auto" href="/UserInfo/NormalUserInfo?userName={0}">
+                    {0}
+                </a>
+                <span>:</span>
+                    <span>
+                        回复<a id="commentUserName" class="col-auto" href="/UserInfo/NormalUserInfo?userName={1}">
+                            {1}
+                        </a> :
+                    </span>               
+                <span class="">{2}</span>
+            </div>
+
+
+            <div id="timeAndVote" class="row">
+                <div id="time" class="col-auto ml-3">----{0}</div>
+                <div class="col-auto">
+                    <button id="voteUp" class="VoteUp VoteUp-sm {1}" onclick="VoteC(1,'{2}',this)"></button>
+                    <span id="upcount" class="text-center">{3}</span>
+                </div>
+                <div class="col-auto" style="height:100%;">
+                    <button id="voteDown" class="VoteDown VoteDown-sm {4}" onclick="VoteC(-1,'{2}',this)"></button>
+                    <span id="downcount" class="text-center">{5}</span>
+                </div>
+
+                    <button id="delete" class="btn btn-sm btn-danger col-auto" onclick="deleteComment({2},this)">删除</button>
+                <button id="Reply" style="height:30px;" class="btn btn-sm btn-primary col-auto" onclick="Reply('{2}',this)">回复</button>
+                <div id="commentDiv" class="ml-3" style="display:none;width:100%;">
+                    <form name="comment" id="comment" method="post" asp-page="/Articles/Details">
+                        <textarea class="form-control" name="Text" rows="3"></textarea>
+                        <span name="Text"></span>
+                        <input class="btn btn-sm btn-primary" formaction="/Articles/Details?commentId={2}"  type="submit" value="回复" />
+                    </form>
+                </div>
+            </div>
+        </div>
+        <button id="loadInnerBtn" class="btn-primary"  >加载更多评论</button>
+    </div>
+</div>

@@ -1,0 +1,7 @@
+﻿@using MyWeb.Pages.UserInfo
+@model IEnumerable<CommentView>
+
+@foreach (var comment in Model)
+{
+<partial name="CommentPartial/CommentSimple" for="@comment"/>
+}

@@ -1,0 +1,35 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model ArticleView
+@{
+    if (Model.CurrentUserAction > 0)
+    {
+        ViewBag.VotedUp = "VoteUpActive";
+        ViewBag.VotedDown = "";
+    }
+    else if (Model.CurrentUserAction < 0)
+    {
+        ViewBag.VotedDown = "VoteDownActive";
+        ViewBag.VotedUp = "";
+    }
+    else
+    {
+        ViewBag.VotedUp = "";
+        ViewBag.VotedDown = "";
+    }
+}
+<div class="row  border ">
+    <div class="col-auto">
+        <div class="View"></div>
+        <div id="viewcount" class="col-auto text-center">@Model.ViewCount</div>
+    </div>
+    <div class="col-auto " id="@("vote1"+Model.Id)">
+        <button id="voteUp" class="VoteUp @ViewBag.VotedUp" onclick="Vote(1,'@Model.Id',this)"></button>
+        <div id="upcount" class="text-center">@Model.VoteUpNumber</div>
+    </div>
+    <div class="col-auto " id="@("vote-1"+Model.Id)">
+        <button id="voteDown" class="VoteDown @ViewBag.VotedDown" onclick="Vote(-1,'@Model.Id',this)"></button>
+        <div id="downcount" class="text-center">@Model.VoteDownNumber</div>
+    </div>
+</div>

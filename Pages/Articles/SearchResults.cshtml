@@ -1,0 +1,79 @@
+﻿@page
+@model MyWeb.Pages.Articles.SearchResultsModel
+@{
+    
+}
+<style>
+    img {
+        width:100%;
+    }
+</style>
+<partial name="ArticlePartial/ArticleCards" for="@Model.Articles" />
+@{
+
+    int maxButtonCount = 3;
+    List<(string active,int page)> actives = new List<(string active,int page)>();
+    if (Model.MaxPage < maxButtonCount)
+    {
+        for(int i = 1; i <= Model.MaxPage;i++)
+        {
+            var active = "";
+            if (Model.CurrentPage == i)
+            {
+                active = "active";
+            }
+            actives.Add((active,i));
+        }
+    }
+    else
+    {
+        var start = Math.Clamp(Model.CurrentPage-maxButtonCount/2,1,Model.MaxPage);
+        var end=Math.Clamp(Model.CurrentPage+maxButtonCount/2,1,Model.MaxPage);
+        var leftDelta = Model.CurrentPage - start;
+        var rightDelta = end - Model.CurrentPage;
+        if (leftDelta < maxButtonCount / 2)
+        {
+            end=Math.Clamp(end+maxButtonCount/2-leftDelta,1,Model.MaxPage);
+        }
+        else if (rightDelta < maxButtonCount / 2)
+        {
+            start=Math.Clamp(start-maxButtonCount/2+rightDelta,1,Model.MaxPage);
+        }
+        for(int i = start; i <= end; i++)
+        {
+            var active = "";
+            if (Model.CurrentPage == i)
+            {
+                active = "active";
+            }
+            actives.Add((active,i));
+        }
+    }
+
+}
+@if (Model.Articles.Count() > Model.PageCount)
+{
+ <ul class="pagination">
+    @if(Model.CurrentPage != 1)
+    {
+        <li class="page-item">
+            <a class="btn btn-primary"  asp-route-word="@Model.Word" asp-route-pageNumber="@Model.CurrentPage" asp-route-pageAction="-1"
+            asp-route-number="@Model.Articles.First().Id">上一页</a>
+        </li>
+    }
+    @foreach(var s in actives)
+    {
+    <li class="page-item @s.active">
+        <a class="btn btn-primary" asp-route-word="@Model.Word" asp-route-pageNumber="@s.page">@s.page</a>
+    </li>
+    }
+    @if(Model.CurrentPage != Model.MaxPage)
+    {
+        <li class="page-item">
+            <a class="btn btn-primary" asp-route-word="@Model.Word" asp-route-pageNumber="@Model.CurrentPage" asp-route-pageAction="1"
+            asp-route-number="@Model.Articles.Last().Id">下一页</a>
+        </li>
+    }
+</ul>   
+}
+

@@ -1,0 +1,128 @@
+﻿@page
+
+@model MyWeb.Pages.IndexModel
+@inject IAuthorizationService Service
+@inject SignInManager<MyUser> SignInManager
+
+@{
+
+    ViewData["Title"] = "Index";
+    string order;
+    if (Model.Descending)
+    {
+        order = "倒序";
+    }
+    else
+    {
+        order = "正序";
+    }
+}
+<div style="display:none">
+    <partial name="ArticlePartial/ArticleViewTemplate" />
+</div>
+<div class="container row">
+    <a class="btn btn-primary col-auto" asp-route-pageNumber="@Model.CurrentPageNumber"
+     asp-route-descending="@(!Model.Descending)" asp-route-sortWord="@Model.SortWord">@order</a>
+    @{
+        var sortText = "最新";
+        if (Model.SortWord == "vote")
+        {
+            sortText = "最多赞";
+        }
+        else if (Model.SortWord == "view")
+        {
+            sortText = "最热";
+        }
+    }
+    <div class="dropdown col-auto">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            选择顺序 @sortText
+        </button>
+        <div class="dropdown-menu">
+            <a  class="dropdown-item" asp-route-descending="@(Model.Descending)" asp-route-sortWord="time">
+                最新
+            </a>
+            <a  class="dropdown-item" asp-route-descending="@(Model.Descending)" asp-route-sortWord="view">
+                最热
+            </a>
+            <a  class="dropdown-item" asp-route-descending="@(Model.Descending)" asp-route-sortWord="vote">
+                最多赞
+            </a>
+        </div>
+    </div>
+</div>
+<partial for="@Model.ArticleViews" name="ArticlePartial/ArticleCards" />
+@{/*
+ * <button class="btn-primary " onclick="LoadMoreArticles('#articleList',this)">加载更多</button>
+    <script>
+        var articleViewId=@Model.ArticleViews.Last().Id;
+    </script>
+ * */}
+
+@if(Model.MaxPageNumber>1){
+    int maxButtonCount = 7;
+    List<(string active,int page)> actives = new List<(string active,int page)>();
+    if (Model.MaxPageNumber < maxButtonCount)
+    {
+        for(int i = 1; i <= Model.MaxPageNumber;i++)
+        {
+            var active = "";
+            if (Model.CurrentPageNumber == i)
+            {
+                active = "active";
+            }
+            actives.Add((active,i));
+        }
+    }
+    else
+    {
+        var start = Math.Clamp(Model.CurrentPageNumber-maxButtonCount/2,1,Model.MaxPageNumber);
+        var end=Math.Clamp(Model.CurrentPageNumber+maxButtonCount/2,1,Model.MaxPageNumber);
+        var leftDelta = Model.CurrentPageNumber - start;
+        var rightDelta = end - Model.CurrentPageNumber;
+        if (leftDelta < maxButtonCount / 2)
+        {
+            end=Math.Clamp(end+maxButtonCount/2-leftDelta,1,Model.MaxPageNumber);
+        }
+        else if (rightDelta < maxButtonCount / 2)
+        {
+            start=Math.Clamp(start-maxButtonCount/2+rightDelta,1,Model.MaxPageNumber);
+        }
+        for(int i = start; i <= end; i++)
+        {
+            var active = "";
+            if (Model.CurrentPageNumber == i)
+            {
+                active = "active";
+            }
+            actives.Add((active,i));
+        }
+    }
+
+
+<ul class="pagination">
+    @if(Model.CurrentPageNumber != 1)
+    {
+        <li class="page-item">
+            <a class="btn btn-primary"  asp-route-sortWord="@Model.SortWord" asp-route-pageNumber="@(Model.CurrentPageNumber-1)" 
+              asp-route-descending="@Model.Descending">上一页</a>
+        </li>
+    }
+    @foreach(var s in actives)
+    {
+      <li class="page-item @s.active">
+        <a class="btn btn-primary" asp-route-sortWord="@Model.SortWord" asp-route-pageNumber="@s.page" asp-route-descending="@Model.Descending">@s.page</a>
+      </li>
+    }
+    @if(Model.CurrentPageNumber != Model.MaxPageNumber)
+    {
+        <li class="page-item">
+            <a class="btn btn-primary" asp-route-sortWord="@Model.SortWord" asp-route-pageNumber="@(Model.CurrentPageNumber+1)" 
+             asp-route-descending="@Model.Descending">下一页</a>
+        </li>
+    }
+</ul>
+}
+
+
+

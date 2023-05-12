@@ -1,0 +1,286 @@
+﻿@implements IExamine
+@{
+    var src = String.IsNullOrEmpty(ArticleView.Cover) ? "~/images/cover.jpg" : ArticleView.Cover;
+    var examineTypes = new List<ExamineType>
+    {
+       ExamineType.通过,
+       ExamineType.拒绝,
+       ExamineType.删除,
+    };
+}
+<div class="row">
+    <div class="col-md-4">
+        <img src="@src" class="ArticleCover" />
+    </div>
+    <div class="col-md-8">
+        <p class="col-auto "><ArticleLink Id=ArticleView.Id>@ArticleView.Title</ArticleLink></p>
+        <div class="row col-auto">
+            <div class="col-auto">
+                @ArticleView.CreateTime
+            </div>
+            <div class="col-auto">
+                @ArticleView.State
+            </div>
+            <div class="col-auto">
+                <UserLink UserName=@ArticleView.AuthorName></UserLink>
+            </div>
+        </div>
+        <div class="col-auto">
+            <button class="page-link" @onclick=ShowText>@showDisplayText</button>
+
+        </div>
+        <div class="col-auto row">
+            @if (ArticleView.IsDeleted)
+            {
+                <ConfirmAgain buttonClass="btn btn-success">
+                    <ToggleButton>
+                        恢复
+                    </ToggleButton>
+                    <Title>
+                        @($"确认恢复吗？")
+                    </Title>
+                    <Target>
+                        <button class="btn btn-success" @onclick=@Recover>恢复</button>
+                        <CancelButton ButtonClass="btn btn-danger">取消</CancelButton>
+                    </Target>
+                </ConfirmAgain>
+            }
+            else
+            {
+                <label>理由</label>
+                <input class="form-control" type="text" @bind-value=NotifyText />
+                <ExamineGroup Examine=this ExamineTypes=@examineTypes></ExamineGroup>
+            }
+
+        </div>
+    </div>
+    <ExamineRecordsList Records=ArticleView.ExamineRecords></ExamineRecordsList>
+</div>
+@if (Show)
+{
+    <div class="col-8">
+        @((MarkupString)ArticleView.Texts)
+    </div>
+}
+
+@code {
+    ArticleExamineBind articleExamine = new();
+    [CascadingParameter]
+    public ApplicationDbContext AppContext { get; set; }
+    [CascadingParameter]
+    public SecretProvider SecretProvider { get; set; }
+    [CascadingParameter]
+    public AdminPanel DataSource { get; set; }
+    [Parameter]
+    public ArticleView ArticleView { get; set; }
+    [Parameter]
+    public ArticleState? StateDone { get; set; }
+    bool Show;
+    string showDisplayText = "显示内容";
+    string NotifyText;
+    public async Task Examine(int action)
+    {
+        await ExamineArticle(action);
+    }
+    async Task ExamineArticle(int action)
+    {
+        try
+        {
+            var id = SecretProvider.UnProtectId(ArticleView.Id);
+            var article = await AppContext.Articles.IgnoreQueryFilters().SingleOrDefaultAsync(a => a.Id == id);
+            if (action == 0)
+            {
+                article.State = ArticleState.Approved;
+            }
+            else if (action == 1)
+            {
+                article.State = ArticleState.Rejected;
+            }
+            else if (action == 2)
+            {
+                AppContext.Articles.Remove(article);
+            }
+            var notify = MingklyHelpers.GetNotify(action, article, NotifyText, SecretProvider);
+            await AppContext.SystemNotifies.AddAsync(notify);
+            var record = new ExamineRecord
+                {
+                    ExaminerId = DataSource.UserId,
+                    ArticleId = article.Id,
+                    Action = action,
+                    Time = DateTime.Now,
+                };
+            await AppContext.ExamineRecords.AddAsync(record);
+            await AppContext.SaveChangesAsync();
+            DataSourceChange(record, action);
+            await InvokeAsync(StateHasChanged);
+            DataSource.Refresh();
+        }
+        catch
+        {
+            DataSource.Error("");
+        }
+    }
+    void DataSourceChange(ExamineRecord record, int action)
+    {
+        var targetArticle = DataSource.Articles.SingleOrDefault(a => a.Id == ArticleView.Id);
+        DataSource.Articles.Remove(targetArticle);
+        var targetExaminedArticle = DataSource.ExaminedArticles.SingleOrDefault(r => r.Id == ArticleView.Id);
+        var examineRecord = new ExamineRecordView
+            {
+                Examiner = new UserInfoView
+                {
+                    Name = DataSource.UserName,
+                },
+                Action = record.Action,
+                Time = record.Time,
+            };
+        if (targetArticle != null)
+        {
+            if (targetArticle.ExamineRecords == null)
+            {
+                targetArticle.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                targetArticle.ExamineRecords.Add(examineRecord);
+            }
+            SetState(targetArticle, action);
+        }
+        if (targetExaminedArticle != null)
+        {
+            if (targetExaminedArticle.ExamineRecords == null)
+            {
+                targetExaminedArticle.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                targetExaminedArticle.ExamineRecords.Add(examineRecord);
+            }
+            SetState(targetExaminedArticle, action);
+            if (action == 2)
+            {
+                DataSource.DeletedArticles.Add(targetExaminedArticle);
+            }
+        }
+        else
+        {
+            DataSource.ExaminedArticles.Add(targetArticle);
+            if (action == 2)
+            {
+                DataSource.DeletedArticles.Add(targetArticle);
+            }
+        }
+
+    }
+
+    void ShowText()
+    {
+        Show = !Show;
+        if (Show)
+        {
+            showDisplayText = "隐藏内容";
+        }
+        else
+        {
+            showDisplayText = "显示内容";
+        }
+    }
+    void SetState(ArticleView article, int action)
+    {
+        if (action == 0)
+        {
+            article.State = ArticleState.Approved;
+        }
+        else if (action == 1)
+        {
+            article.State = ArticleState.Rejected;
+        }
+        else if (action == 2)
+        {
+            article.IsDeleted = true;
+        }
+    }
+    async Task DeleteReal()
+    {
+        try
+        {
+            var id = SecretProvider.UnProtectId(ArticleView.Id);
+            var article = await AppContext.Articles
+            .IgnoreQueryFilters()
+            .Include(a => a.Comments)
+            .Include(a => a.FavouriteUser)
+            .Include(a => a.UserAction)
+            .Include(a => a.BeExaminedRecords)
+            .SingleAsync(a => a.Id == id);
+            AppContext.RemoveRange(article.FavouriteUser);
+            AppContext.RemoveRange(article.UserAction);
+            AppContext.RemoveRange(article.BeExaminedRecords);
+            AppContext.RemoveRange(article.Comments);
+            AppContext.Remove(article);
+            await AppContext.SaveChangesAsync();
+            var target = DataSource.ExaminedArticles.SingleOrDefault(a => a.Id == ArticleView.Id);
+            DataSource.ExaminedArticles.Remove(target);
+            var target2 = DataSource.DeletedArticles.SingleOrDefault(a => a.Id == ArticleView.Id);
+            DataSource.DeletedArticles.Remove(target2);
+
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+    async Task Recover()
+    {
+        try
+        {
+            var id = SecretProvider.UnProtectId(ArticleView.Id);
+            var article = await AppContext.Articles
+            .IgnoreQueryFilters()
+            .SingleAsync(a => a.Id == id);
+            AppContext.Entry(article).CurrentValues["IsDeleted"] = false;
+            var record = new ExamineRecord
+                {
+                    ExaminerId = DataSource.UserId,
+                    ArticleId = article.Id,
+                    Action = 3,
+                    Time = DateTime.Now,
+                };
+            await AppContext.ExamineRecords.AddAsync(record);
+            await AppContext.SaveChangesAsync();
+            var recordView = new ExamineRecordView
+                {
+                    Examiner = new UserInfoView
+                    {
+                        Name = DataSource.UserName,
+                    },
+                    Action = record.Action,
+                    Time = record.Time,
+                };
+
+            var target = DataSource.ExaminedArticles.SingleOrDefault(a => a.Id == ArticleView.Id);
+            DataSource.ExaminedArticles.Remove(target);
+            var target2 = DataSource.DeletedArticles.SingleOrDefault(a => a.Id == ArticleView.Id);
+            DataSource.DeletedArticles.Remove(target2);
+            target2.IsDeleted = false;
+            target2.ExamineRecords.Add(recordView);
+            if (target2.State == ArticleState.Submit)
+            {
+                DataSource.Articles.Add(target2);
+            }
+            else
+            {
+                DataSource.ExaminedArticles.Add(target2);
+            }
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+}

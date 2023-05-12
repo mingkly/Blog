@@ -1,0 +1,133 @@
+﻿@page
+@model MyWeb.Pages.DetailsModel
+@inject SignInManager<MyUser> _signManager
+@inject IAuthorizationService Service
+@using MyWeb.Utilities
+@using System.Net
+@using System.Text
+@{
+    ViewData["Title"] = "Details";
+    ViewBag.ArticleId = Model.ArticleView.Id;
+}
+<div style="display:none">
+    <partial name="CommentPartial/CommentTemplate" />
+</div>
+<style>
+
+    img {
+        max-width: 100%;
+    }
+</style>
+<h1>Details</h1>
+
+<div class="col-md-8 mx-auto d-block">
+    <h4>Article</h4>
+    <hr />
+    <div class="text-center">
+        <p class="font-weight-bold text-center">
+            @Html.DisplayFor(model => model.ArticleView.Title)
+        </p>
+        <p class="text-info">
+            @Model.ArticleView.CreateTime.ToShortDateString()
+            &nbsp;&nbsp;
+            <a asp-page="/UserInfo/NormalUserInfo" asp-route-userName="@Model.ArticleView.AuthorName">
+                @Html.DisplayFor(model => model.ArticleView.AuthorName)
+            </a>
+        </p>
+    </div>
+    <div id="textsAndImages" class="mx-auto col-auto">
+        @Html.Raw(Model.ArticleView.Texts)
+    </div>
+
+    <div class="col-auto  mt-2">
+        <div class="row col-auto">
+            @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Administrator))
+            {
+                <div class="row border border-secondary ">
+                    <a class="btn btn-primary" asp-page="/Articles/ExamineTargetArticle" asp-route-id="@Model.ArticleView.Id">审核页面</a>
+                    <a class="btn btn-primary" asp-page="edit" asp-route-id="@Model.ArticleView.Id">修改</a>
+                </div>
+            }
+            <a class="col-auto btn btn-primary" asp-page="./Index">返回</a>
+        </div>
+        <div class="row col-auto mt-2">
+
+            @if (_signManager.IsSignedIn(User))
+            {
+                <partial name="ArticlePartial/ArticleVoteBar" for="@Model.ArticleView" />
+                if (Model.ArticleView.Favourited)
+                {
+                    ViewBag.Favourited = "FavouriteActive";
+                }
+                else
+                {
+                    ViewBag.Favourited = "";
+                }
+                <div class="col-auto">
+                    <button class="Favourite @ViewBag.Favourited" id="Favourite" onclick="Favourite('@Model.ArticleView.Id')"></button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (_signManager.IsSignedIn(User))
+{
+    <div class="col-auto">
+        发表评论:
+    </div>
+    <form method="post">
+        <textarea rows="3" class="form-control" asp-for="Comment.Text"></textarea>
+        <span asp-validation-for="Comment.Text"></span>
+        <input type="submit" class="btn btn-primary" value="发表" asp-route-articleId="@Model.ArticleView.Id" />
+    </form>
+    <div id="commentList">
+        <partial name="CommentPartial/CommentCards" for="@Model.InnerComments" />
+    </div>
+    @if (Model.InnerComments.Count == 3)
+    {
+       <button id="loadmoreBtn" class="btn btn-primary" onclick="LoadMoreComment()">加载更多</button>
+    }
+    @if (User.IsInRole(RoleNames.Administrator))
+    {
+        <script>
+            async function Examine(id,action,btn){
+                var res=await fetch("api/Articles/ExamineArticle",{
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val(),
+                        'content-type': 'application/json',
+                        'accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Action:action,
+                        Id:id
+                    })
+                });
+                if(res.ok){
+                  var json=await res.json();
+                  console.log(json);
+                  if(json.id=="suc"){
+                      if(json.msg=="0"){
+                          $("#"+id+"state").html("通过");
+                      }
+                      else if(json.msg=="1"){
+                          $("#"+id+"state").html("拒绝");
+                      }
+                  }
+                  else{
+                      alert(json.msg);
+                  }
+                }
+            }
+        </script>
+    }
+    <script>
+        var articleId =@Model.ArticleView.Id;
+
+        var commentId =@(Model.InnerComments != null && Model.InnerComments.Count ==3
+            ?Model.InnerComments.Last().Key.Id:long.MaxValue);
+
+
+    </script>
+}

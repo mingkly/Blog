@@ -1,0 +1,14 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.ViewHistoryModel
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyHistory;
+}
+<style>
+    img {
+        width: 100%;
+    }
+</style>
+<p>历史记录</p>
+<partial for="@Model.ArticleViews" name="ArticlePartial/ArticleCardsSimple" />
+
+

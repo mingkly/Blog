@@ -1,0 +1,14 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model ArticleView
+@{
+    var item = Model;
+}
+<div id="viewcount" class="col-auto ">@item.ViewCount</div>
+<div class="col-auto " id="@("vote1"+item.Id)">
+    <span id="upcount">@item.VoteUpNumber</span>
+</div>
+<div class="col-auto " id="@("vote-1"+item.Id)">
+    <span id="downcount">@item.VoteDownNumber</span>
+</div>

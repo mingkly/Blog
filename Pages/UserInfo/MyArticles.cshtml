@@ -1,0 +1,219 @@
+﻿@page
+@model MyWeb.Pages.UserInfo.MyArticlesModel
+
+@{
+    ViewBag.ActiveUserPage = ManagerUserInfoNav.MyArticles;
+    string order;
+    if (Model.Descending)
+    {
+        order = "倒序";
+    }
+    else
+    {
+        order = "正序";
+    }
+    string hide = "block";
+    if (Model.PageCount > Model.ArticleViews.Count())
+    {
+        hide = "none";
+    }
+}
+<style>
+    img {
+        width: 100%;
+    }
+
+    .approved {
+    }
+
+    .submit {
+    }
+
+    .rejected {
+    }
+</style>
+<p>我的文章</p>
+<ul class="nav nav-tabs">
+    <li class="nav-item">
+        <button class="nav-link btn-primary active" onclick="changeState('all',this)">所有</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link btn-primary" onclick="changeState('approved',this)">已通过</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link btn-primary" onclick="changeState('submit',this)">审核中</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link btn-primary " onclick="changeState('rejected',this)">退回</button>
+    </li>
+</ul>
+<table style="display:none">
+    <tr id="temp">
+        <td>
+            @{
+                var article = new ArticleView();
+            }
+            <partial name="ArticlePartial/ArticleMyOwn" for="@article">
+        </td>
+    </tr>
+</table>
+<table class="table">
+    <tbody id="articleList">
+        <tr>
+            <th>
+                <form class="form-check custom-switch" method="get">
+                    <input type="checkbox" style="display:none" asp-for="Descending" class="form-check-input" />
+                    <label asp-for="Descending" class="btn btn-light" onclick="KaiGuan(this)">@order</label>
+                    <select asp-for="SortWord" class="btn btn-primary" onchange="this.form.submit();">
+                        <option class="text-left text-black-50 bg-white" value="title">名称</option>
+                        <option class="text-left text-black-50 bg-white" value="time">最新</option>
+                        <option class="text-left text-black-50 bg-white" value="view">最多浏览</option>
+                        <option class="text-left text-black-50 bg-white" value="vote">最多赞</option>
+                    </select>
+                </form>
+            </th>
+        </tr>
+        @foreach (var item in Model.ArticleViews)
+        {
+            string className;
+            if (item.State == ArticleState.Approved)
+            {
+                className = "approved";
+            }
+            else if (item.State == ArticleState.Submit)
+            {
+                className = "submit";
+            }
+            else
+            {
+                className = "rejected";
+            }
+            <tr class="@className">
+                <td>
+                    <partial name="ArticlePartial/ArticleMyOwn" for="@item">
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<form method="post" asp-controller="Articles" asp-action="LoadMore">
+    <input type="hidden" id="SortWord" name="SortWord" value="@Model.SortWord" />
+    <input type="hidden" id="Descending" name="Descending" value="@Model.Descending.ToString()" />
+    <input type="hidden" id="PageJump" name="PageJump" value="1" />
+    <input type="hidden" id="PageCount" name="PageCount" value="@Model.PageCount" />
+    <input type="hidden" id="State" name="State" value="-1" />
+    @if (Model.ArticleViews != null && Model.ArticleViews.Count() > 0)
+    {
+        <input type="hidden" id="Number" name="Number" value="@Model.ArticleViews.Last().Id" />
+    }
+    <button type="button" id="loadmore" onclick="LoadMore(this.form)" class="btn btn-primary" style="display:@hide">加载更多</button>
+</form>
+<script>
+     function KaiGuan(lable) {
+         console.log(lable.innerHTML);
+         if (lable.innerHTML == "倒序") {
+             lable.innerHTML = "正序"
+         }
+         else {
+             lable.innerHTML = "倒序"
+         }
+     }
+     var current="all";
+     var hasMore;
+     var  lastLink;
+     $(function(){
+         if($("#loadmore").css("display")=="none"){
+             hasMore="none";
+         }
+     })
+     async function LoadMore(form){
+         var formData=new FormData(form);
+         var res=await fetch(form.action,{
+             method:"POST",
+             headers:{
+             },
+             body:formData
+         });
+         if(res.ok){
+             var json=await res.json();
+             console.log(json);
+             if(json.id==0){
+                 $.each(json.articleViews,function (key,value){
+                     $("#title").html(value.title);
+                     $("#texts").html(value.texts);
+                     $("#time").html(value.time);
+                     $("#viewcount").html(value.viewCount+" 浏览");
+                     $("#upcount").html(value.voteUpNumber+" 赞");
+                     $("#downcount").html(value.voteDownNumber+" 踩");
+                     $("#articleHref1").attr("href","/articles/details?id="+value.id);
+                     $("#articleHref2").attr("href","/articles/details?id="+value.id);
+                     if(value.cover!=null|""){
+                         $("#cover").attr("src",value.cover);
+                     }
+
+                     var className;
+                     if(value.state==0){
+                         className="approved";
+                     }
+                     else if(value.state==1){
+                         className="submit";
+                         $("#submit").html("审核中");
+                         $("#approve").css("display","none");
+                     }
+                     else{
+                         className="rejected";
+                        $("#edit").html("修改").attr("href","/articles/edit?id="+value.id);
+                        $("#approve").css("display","none");
+                     }
+                     var cl=$("#temp").clone(true);
+                     $("#approve").css("display","");
+                     $("#edit").html("").attr("href","");
+                     $("#submit").html("");
+                     cl.attr("class",className);
+                     $("#articleList").append(cl);
+                     console.log(value);
+                 })
+                  $("#Number").val(json.number);
+             }
+             else{
+                 $("#loadmore").css("display","none");
+                 hasMore="none";
+             }
+         }
+    }
+            function changeState(name,link=null){
+             if(link){
+                 if(lastLink){
+                    $(lastLink).attr("class","nav-link btn-primary")
+                 }
+                $(link).attr("class","nav-link btn-primary active")
+                lastLink=link;
+             }
+             if(name!="all"||hasMore=="none"){
+                 $("#loadmore").css("display","none");
+             }
+             else{
+                 $("#loadmore").css("display","block");
+             }
+             $.each($("#articleList").children("tr"),function(key,value){
+                 if($(value).attr("class")!=""){
+                     if(name=="all"){
+                          $(value).css("display","block");
+                     }
+                     else{
+                         $(value).css("display","none");
+                     }
+                 }
+             })
+             current=name;
+             if(name=="all"){
+                 return;
+             }
+
+             var list=document.getElementsByClassName(name);
+             $.each(list,function(key,value){
+                 $(value).css("display","block");
+             })
+         }
+</script>
+

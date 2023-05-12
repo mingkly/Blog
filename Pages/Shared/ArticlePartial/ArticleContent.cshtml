@@ -1,0 +1,29 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model ArticleView
+@{
+    var item = Model;
+}
+<h6 name="title">
+    <a id="title" asp-page="/Articles/Details" asp-route-Id="@item.Id">
+        @Html.DisplayFor(modelItem => item.Title)
+    </a>
+</h6>
+<div class="row ">
+    <div id="time" class="col-auto">
+        @MingklyHelpers.GetDeltaTime(item.CreateTime)
+    </div>
+    <a id="author" class="col-auto" asp-page="../UserInfo/NormalUserInfo" asp-route-userName="@item.AuthorName">
+        @Html.DisplayFor(modelItem => item.AuthorName)
+    </a>
+</div>
+<div name="text" class="font-italic ">
+    <a id="texts" asp-page="/Articles/Details" asp-route-Id="@item.Id">
+        @item.Texts
+    </a>
+    @if (item.NotReaded)
+    {
+        <span class="badge  rounded-circle bg-danger mt-0 ml-0">&nbsp;&nbsp;</span>
+    }
+</div>

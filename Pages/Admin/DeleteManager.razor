@@ -1,0 +1,6 @@
+﻿<ExamineRecordsPanel Articles=DataSource.DeletedArticles Comments=DataSource.DeletedComments Users=DataSource.BanedUsers></ExamineRecordsPanel>
+
+@code {
+    [CascadingParameter]
+    public AdminPanel DataSource{ get; set; }
+}

@@ -1,0 +1,14 @@
+﻿@using MyWeb.Pages
+@model IEnumerable<ArticleView>
+<table class="table">
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <partial name="ArticlePartial/ArticleSimple" for="@item">
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

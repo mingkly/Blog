@@ -1,0 +1,11 @@
+﻿
+@*
+    For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@page "/blazor"
+@namespace MyWeb.Pages.Shared
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = "_Layout";
+}
+<component type="typeof(App)" render-mode="ServerPrerendered" />

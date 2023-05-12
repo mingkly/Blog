@@ -1,0 +1,13 @@
+﻿<button class=@ButtonClass @onclick=@(e=>Target.Cancel()) >
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    public ICancelable Target{ get; set; }
+    [Parameter]
+    public RenderFragment ChildContent{ get; set; }
+    [Parameter]
+    public string ButtonClass { get; set; }
+
+}

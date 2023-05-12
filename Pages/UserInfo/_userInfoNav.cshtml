@@ -1,0 +1,32 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.UserInfoActive(ViewContext)" asp-page="UserInfo">个人信息</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyHistoryActive(ViewContext)" asp-page="ViewHistory">历史记录</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyFavouriteActive(ViewContext)" asp-page="MyFavourite">收藏</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyFollowActive(ViewContext)" asp-page="MyFollow">关注</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyFansActive(ViewContext)" asp-page="MyFans">我的粉丝</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyCommentsActive(ViewContext)" asp-page="MyComments">发表的评论</a></li>
+    <li class="nav-item"><a id="replyLink" class="nav-link @ManagerUserInfoNav.MyReplyActive(ViewContext)" asp-page="MyReply">回复我的</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.MyArticlesActive(ViewContext)" asp-page="MyArticles">发表的文章</a></li>
+    <li class="nav-item"><a id="notifyLink" class="nav-link @ManagerUserInfoNav.SystemMessageActive(ViewContext)" asp-page="SystemMessage">系统通知</a></li>
+    <li class="nav-item"><a id="chatLink" class="nav-link @ManagerUserInfoNav.ChatsActive(ViewContext)" asp-page="MyChats">私信</a></li>
+    <li class="nav-item"><a class="nav-link @ManagerUserInfoNav.UserSecurityActive(ViewContext)" asp-page="UserSecurity">安全</a></li>
+</ul>
+<script>
+    var $span=$("<span class='badge rounded-circle bg-danger text-white mt-0 mr-0'></span>");
+    $(function(){
+
+        if(replyCount!=0){
+            $("#replyLink").append($span.clone().html(replyCount));
+        }
+        if(notifyCount!=0){
+           $("#notifyLink").append($span.clone().html(notifyCount));
+        }
+        if(chatCount!=0){
+           $("#chatLink").append($span.clone().html(chatCount));
+        }
+    })
+</script>

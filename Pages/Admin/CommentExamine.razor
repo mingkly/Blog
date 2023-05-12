@@ -1,0 +1,276 @@
+﻿@implements IExamine
+@{
+    var avatarSrc = string.IsNullOrEmpty(CommentView.UserAvatar) ? "~/images/daxiong.gif" : CommentView.UserAvatar;
+    var examineTypes = new List<ExamineType>
+    {
+       ExamineType.通过,
+       ExamineType.拒绝,
+       ExamineType.删除,
+    };
+}
+<div class="card ">
+    <div class="card-header row ">
+        <NavLink href=@("UserInfo/NormalUserInfo?userName="+CommentView.UserName) target="_blank">
+            <img src="@avatarSrc" class="avatar-sm" />
+            @CommentView.UserName
+
+        </NavLink>
+        @if (CommentView.ReplyToCommentId != null)
+        {
+            <span>
+                回复:
+                <NavLink href=@("UserInfo/NormalUserInfo?userName="+CommentView.ReplyToCommentUserName) target="_blank">@CommentView.ReplyToCommentUserName</NavLink>
+            </span>
+        }
+        :
+
+    </div>
+    <div class="card-body ">
+        <div class="m-0">
+            @CommentView.Text
+        </div>
+        <div class="col-auto">
+            @CommentView.Time
+        </div>
+        <div class="col-auto">
+            @CommentView.State
+        </div>
+        <div class="col-auto row">
+            @if (CommentView.IsDeleted)
+            {
+                <ConfirmAgain buttonClass="btn btn-success">
+                    <ToggleButton>
+                        恢复
+                    </ToggleButton>
+                    <Title>
+                        @($"确认恢复吗？")
+                    </Title>
+                    <Target>
+                        <button class="btn btn-success" @onclick=@Recover>恢复</button>
+                        <CancelButton ButtonClass="btn btn-danger">取消</CancelButton>
+                    </Target>
+                </ConfirmAgain>
+
+            }
+            else
+            {
+                <label>理由</label>
+                <input class="form-control" type="text" @bind-value=NotifyText />
+                <ExamineGroup Examine=this ExamineTypes=@examineTypes></ExamineGroup>
+            }
+
+        </div>
+    </div>
+    <ExamineRecordsList Records=CommentView.ExamineRecords></ExamineRecordsList>
+</div>
+
+
+@code {
+    [CascadingParameter]
+    public ApplicationDbContext AppContext { get; set; }
+    [CascadingParameter]
+    public SecretProvider SecretProvider { get; set; }
+    [Parameter]
+    public CommentView CommentView { get; set; }
+    [CascadingParameter]
+    public AdminPanel DataSource { get; set; }
+    string NotifyText;
+    public async Task Examine(int action)
+    {
+        await ExamineComment(action);
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+
+    }
+    async Task ExamineComment(int action)
+    {
+        var id = SecretProvider.UnProtectId(CommentView.Id);
+        var comment = await AppContext.Comments.FindAsync(id);
+
+        if (action == 0)
+        {
+            comment.State = CommentState.Approved;
+        }
+        else if (action == 1)
+        {
+            comment.State = CommentState.Rejected;
+        }
+        else if (action == 2)
+        {
+            AppContext.Comments.Remove(comment);
+        }
+        var record = new ExamineRecord
+            {
+                ExaminerId = DataSource.UserId,
+                CommentId = comment.Id,
+                Action = action,
+                Time = DateTime.Now,
+            };
+        await AppContext.ExamineRecords.AddAsync(record);
+        var notify = MingklyHelpers.GetNotify(action, comment, NotifyText, SecretProvider);
+        await AppContext.SystemNotifies.AddAsync(notify);
+        await AppContext.SaveChangesAsync();
+        DataSourceChange(record, action);
+        StateHasChanged();
+        DataSource.Refresh();
+    }
+    void DataSourceChange(ExamineRecord record, int action)
+    {
+        var target = DataSource.Comments.SingleOrDefault(a => a.Id == CommentView.Id);
+        DataSource.Comments.Remove(target);
+        var targetExamined = DataSource.ExaminedComments.SingleOrDefault(r => r.Id == CommentView.Id);
+        var examineRecord = new ExamineRecordView
+            {
+                Examiner = new UserInfoView
+                {
+                    Name = DataSource.UserName,
+                },
+                Action = record.Action,
+                Time = record.Time,
+            };
+        if (target != null)
+        {
+            if (target.ExamineRecords == null)
+            {
+                target.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                target.ExamineRecords.Add(examineRecord);
+            }
+            SetState(target, action);
+        }
+        if (targetExamined != null)
+        {
+            if (targetExamined.ExamineRecords == null)
+            {
+                targetExamined.ExamineRecords = new List<ExamineRecordView> { examineRecord };
+            }
+            else
+            {
+                targetExamined.ExamineRecords.Add(examineRecord);
+            }
+            SetState(targetExamined, action);
+            if (action == 2)
+            {
+                DataSource.DeletedComments.Add(targetExamined);
+            }
+        }
+        else
+        {
+            DataSource.ExaminedComments.Add(target);
+            if (action == 2)
+            {
+                DataSource.DeletedComments.Add(target);
+            }
+        }
+    }
+    void SetState(CommentView comment, int action)
+    {
+        if (action == 0)
+        {
+            comment.State = CommentState.Approved;
+        }
+        else if (action == 1)
+        {
+            comment.State = CommentState.Rejected;
+        }
+        else if (action == 2)
+        {
+            comment.IsDeleted = true;
+        }
+    }
+    async Task DeleteReal()
+    {
+        try
+        {
+            var id = SecretProvider.UnProtectId(CommentView.Id);
+            var Comment = await AppContext.Comments
+            .IgnoreQueryFilters()
+            .Include(a => a.UnderComments)
+            .ThenInclude(a => a.UserActions)
+            .Include(a => a.UnderComments)
+            .ThenInclude(a => a.BeExaminedRecords)
+            .Include(a => a.UserActions)
+            .Include(a => a.BeExaminedRecords)
+            .SingleAsync(a => a.Id == id);
+            foreach (var c in Comment.UnderComments)
+            {
+                AppContext.RemoveRange(c.UserActions);
+                AppContext.RemoveRange(c.BeExaminedRecords);
+            }
+            AppContext.RemoveRange(Comment.UnderComments);
+            AppContext.RemoveRange(Comment.UserActions);
+            AppContext.RemoveRange(Comment.BeExaminedRecords);
+            AppContext.Remove(Comment);
+            await AppContext.SaveChangesAsync();
+            var target = DataSource.ExaminedComments.SingleOrDefault(a => a.Id == CommentView.Id);
+            DataSource.ExaminedComments.Remove(target);
+            var target2 = DataSource.DeletedComments.SingleOrDefault(a => a.Id == CommentView.Id);
+            DataSource.DeletedComments.Remove(target2);
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+    async Task Recover()
+    {
+        try
+        {
+            var id = SecretProvider.UnProtectId(CommentView.Id);
+            var comment = await AppContext.Comments
+            .IgnoreQueryFilters()
+            .SingleAsync(a => a.Id == id);
+            AppContext.Entry(comment).CurrentValues["IsDeleted"] = false;
+            var record = new ExamineRecord
+                {
+                    ExaminerId = DataSource.UserId,
+                    CommentId = comment.Id,
+                    Action = 3,
+                    Time = DateTime.Now,
+                };
+            await AppContext.ExamineRecords.AddAsync(record);
+            await AppContext.SaveChangesAsync();
+            var recordView = new ExamineRecordView
+                {
+                    Examiner = new UserInfoView
+                    {
+                        Name = DataSource.UserName,
+                    },
+                    Action = record.Action,
+                    Time = record.Time,
+                };
+            var target = DataSource.ExaminedComments.SingleOrDefault(a => a.Id == CommentView.Id);
+            DataSource.ExaminedComments.Remove(target);
+            var target2 = DataSource.DeletedComments.SingleOrDefault(a => a.Id == CommentView.Id);
+            DataSource.DeletedComments.Remove(target2);
+            target2.IsDeleted = false;
+            target2.ExamineRecords.Add(recordView);
+            if (target2.State == CommentState.Submit)
+            {
+                DataSource.Comments.Add(target2);
+            }
+            else
+            {
+                DataSource.ExaminedComments.Add(target2);
+            }
+            StateHasChanged();
+            DataSource.Refresh();
+
+        }
+        catch (Exception e)
+        {
+            DataSource.Error(e.Message);
+        }
+    }
+}

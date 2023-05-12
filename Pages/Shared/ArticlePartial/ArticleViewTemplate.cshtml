@@ -1,0 +1,38 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div name="all" id="articleViewTemp" class="card col-4 ">
+    <div class="card-body ">
+        <p>{0}</p>
+        <div class="row">
+            <span>{1}</span>
+            <a id="author" class="col-auto" href="/UserInfo/NormalUserInfo?userName={2}">
+                {2}
+            </a>
+        </div>
+        <a id="articleHref1" href="/Articles/Details?Id={3}" class="border-secondary">
+            <img id="cover" src="{4}" class="ArticleCover" />
+        </a>
+        @{
+            /*
+        <div class="row  border ">
+        <div class="col-auto">
+        <div class="View"></div>
+        <div id="viewcount" class="col-auto text-center">{5}</div>
+        </div>
+        <div class="col-auto " id="vote1{3}">
+        <button id="voteUp" class="VoteUp {6}" onclick="Vote(1,'{3}',this)"></button>
+        <div id="upcount" class="text-center">{7}</div>
+        </div>
+        <div class="col-auto " id="vote-1{3}">
+        <button id="voteDown" class="VoteDown {8}" onclick="Vote(-1,'{3}',this)"></button>
+        <div id="downcount" class="text-center">{9}</div>
+        </div>
+        </div>
+        <a class="btn btn-primary" href="/Articles/ExamineTargetArticle?id={3}">审核页面</a>
+            */
+        }
+    </div>
+</div>

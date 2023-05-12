@@ -1,0 +1,154 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<MyUser> SignInManager
+@inject UserManager<MyUser> UserManager
+@inject UnloginUserManager _unloginUserManager
+@inject ApplicationDbContext AppContext
+@inject IMemoryCache MemoryCache
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Caching.Memory
+@{
+    string role = string.Empty;
+    bool signIn = SignInManager.IsSignedIn(User);
+    int ReplyCount = 0;
+    int ChatCount = 0;
+    int NotifyCount = 0;
+    Dictionary<string, int> ChatCounts = new Dictionary<string, int>();
+}
+<ul class="navbar-nav">
+    @if (signIn)
+    {
+        if (!MemoryCache.TryGetValue(User.Identity.Name + "_Count", out CountInfo countInfo))
+        {
+            countInfo = await AppContext.Users
+            .Select(u => new CountInfo
+                    {
+                        UserName = u.UserName,
+                        UnreadReplyCount = AppContext.Comments
+                    .Where(c => c.ReplyToArticle.AuthorId == u.Id ||
+                    c.BelongToComment.UserId == u.Id ||
+                    c.ReplyToComment.UserId == u.Id)
+                    .Where(c => c.Time > u.LastActivity.ReplyTime)
+                    .Count(),
+                        UnreadChatCount = u.RecentChats
+                    .Join(u.RecievedMessages, c => c.ChatToUserId, m => m.SenderId, (c, m) => new
+                    {
+                        ChatName = c.ChatToUser.UserName,
+                        MessageId = m.Id,
+                        Time = m.Time,
+                        LastTime = c.LastChatTime,
+                    }
+                    )
+                    .Where(c => c.Time > c.LastTime)
+                    .GroupBy(c => c.ChatName)
+                    .Select(g => new CountWithName
+                    {
+                        Name = g.Key,
+                        Count = g.Count()
+                    }),
+                        FavouriteArticleCount = u.Favourites
+                    .Where(f => f.FavouriteUserId != null)
+                    .Select(a => new CountWithName
+                    {
+                        Count = a.FavouriteUser.Articles.Where(a => a.CreateTime > u.LastActivity.ArticleTime).Count(),
+                        Name = a.FavouriteUser.Name,
+                    }),
+                        NotifyCount = u.SystemNotify
+                    .Where(f => f.Time > u.LastActivity.NotifyTime)
+                    .Count(),
+                    })
+            .AsNoTracking()
+            .SingleOrDefaultAsync(u => u.UserName == User.Identity.Name);
+            var option = new MemoryCacheEntryOptions()
+            .SetSlidingExpiration(TimeSpan.FromSeconds(3));
+            option.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(6);
+            MemoryCache.Set(User.Identity.Name + "_Count", countInfo, option);
+        }
+        foreach (var c in countInfo.UnreadChatCount)
+        {
+            ChatCounts.Add(c.Name, c.Count);
+        }
+        ChatCount = countInfo.UnreadChatCount.Sum(c => c.Count);
+
+        var totalCount = countInfo.UnreadReplyCount + countInfo.NotifyCount + ChatCount;
+        var articleCount = countInfo.FavouriteArticleCount.Sum(a => a.Count);
+        ReplyCount = countInfo.UnreadReplyCount;
+        NotifyCount = countInfo.NotifyCount;
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-page="/Articles/FollowUserArticle" title="Manage">
+                关注动态
+                @if (articleCount != 0)
+                {
+                    <span class="badge rounded-circle bg-danger text-white mt-0 mr-0">@articleCount</span>
+                }
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " asp-page="/UserInfo/MyChats">私信</a>
+            @if (ChatCount > 0)
+            {
+                <span class='badge rounded-circle bg-danger text-white mt-0 mr-0'>@ChatCount</span>
+            }
+        </li>
+        @if (User.IsInRole(RoleNames.Administrator))
+        {
+            role = "(管理员)";
+        }
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-page="/UserInfo/UserInfo" title="Manage">
+                @User.Identity.Name @role
+                @if (totalCount != 0)
+                {
+                    <span class="badge rounded-circle bg-danger text-white mt-0 mr-0">@totalCount</span>
+                }
+            </a>
+        </li>
+        <li class="nav-item">
+            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+            </form>
+        </li>
+    }
+    else
+    {
+
+        var user = await _unloginUserManager.GetUserAsync();
+        if (user == null)
+        {
+            user = await _unloginUserManager.CreateCookie();
+        }
+        <li class="nav-item">
+            目前以游客<span>@user.Id</span> 身份浏览
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </li>
+
+
+
+    }
+</ul>
+@if (signIn)
+{
+    <script>
+        var replyCount=@ReplyCount ;
+        var chatCount=@ChatCount;
+        var notifyCount=@NotifyCount;
+
+    </script>
+    @if (ChatCounts.Count != 0)
+    {
+        <script>
+            var chatCountsArray=new Array();
+            @foreach (var c in ChatCounts)
+            {
+                @Html.Raw($"chatCountsArray['{c.Key}']={c.Value};")
+                ;
+            }
+        </script>
+
+
+    }
+}

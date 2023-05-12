@@ -1,0 +1,69 @@
+﻿@model CommentView
+@{
+
+    var thisUser = new UserInfoView
+            {
+                Name = Model.UserName,
+                Avatar = Model.UserAvatar,
+                ShowAvatar = true,
+            };
+    string userUpAction;
+    string userDownAction;
+    @if (Model.CurrentUserAction > 0)
+    {
+        userUpAction = "VoteUpActive";
+        userDownAction = "";
+    }
+    else if (Model.CurrentUserAction < 0)
+    {
+        userUpAction = "";
+        userDownAction = "VoteDownActive";
+    }
+    else
+    {
+        userDownAction = "";
+        userUpAction = "";
+    }
+}
+<div class="card-header">
+    <div class="col-auto">
+        <partial name="UserInfoPartial/CommentUserAvatar" for="@thisUser" />
+        :
+        @if (Model.ReplyToCommentId != null)
+        {
+            var toUser = new UserInfoView
+                {
+                    Name = Model.ReplyToCommentUserName,
+                    ShowAvatar = false,
+                };
+            <span>回复<partial name="UserInfoPartial/CommentUserAvatar" for="@toUser" /> :</span>
+        }
+        <span class="text-dark">@Model.Text</span>
+
+    </div>
+    <div class="row">
+        <div class="col-auto ml-3">----@Model.Time</div>
+        <div class="col-auto">
+            <button id="voteUp" class="VoteUp VoteUp-sm @userUpAction" onclick="VoteC(1,'@Model.Id',this)"></button>
+            <span id="upcount" class="text-center">@Model.VoteUpCount</span>
+        </div>
+        <div class="col-auto">
+            <button id="voteDown" class="VoteDown VoteDown-sm @userDownAction" onclick="VoteC(-1,'@Model.Id',this)"></button>
+            <span id="downcount" class="text-center">@Model.VoteDownCount</span>
+        </div>
+        @if (User.IsInRole(RoleNames.Administrator) || User.Identity.Name == Model.UserName)
+        {
+            <button class="btn btn-danger btn-sm col-auto" onclick="deleteComment(@Model.Id,this)">删除</button>
+        }
+        <button id="Reply" class="btn btn-sm btn-primary" onclick="Reply('@Model.Id',this)">回复</button>
+        <div id="commentDiv" class="ml-3"  style="display:none;height:auto;width:100%;">
+            <form name="comment" id="comment" method="post" asp-page="/Articles/Details">
+                <textarea class="form-control" name="Text" rows="3"></textarea>
+                <span name="Text"></span>
+                <input class="btn btn-primary" asp-route-commentId="@Model.Id" id="@Model.Id" type="submit" value="回复" />
+            </form>
+        </div>
+    </div>
+</div>
+
+

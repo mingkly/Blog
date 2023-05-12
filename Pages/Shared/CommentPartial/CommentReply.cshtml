@@ -1,0 +1,28 @@
+﻿@model CommentView
+@{
+    var comment = Model;
+    var replyUser = new UserInfoView { Name = comment.ReplyToCommentUserName, ShowAvatar = false };
+}
+<div class="card ">
+    <div class="card-header">
+        <a asp-page="/Articles/Details" asp-route-id="@comment.ReplyToArticleId">原文章</a>
+        <partial name="UserInfoPartial/UserAvatar" for="@replyUser" />
+        <span>@comment.Time</span>
+        @if (comment.NotReaded)
+        {
+            <span onclick="this.remove()" class="badge  rounded-circle bg-danger mt-0 ml-0">&nbsp;&nbsp;</span>
+        }
+    </div>
+    <div class="card-body">
+        @comment.Text
+        <div class="mx-auto col-auto" style="height:auto;">
+            <button type="button" class="btn btn-primary" onclick="Reply('@comment.Id',this)" id="@(comment.Id.ToString()+"b")">回复</button>
+            <form style="display:none" method="post" class="form-control" style="height:auto;" asp-page-handler="Reply">
+                <input type="hidden" name="id" value="@comment.Id" />
+                <input type="hidden" name="belongToId" value="@comment.BelongToCommentId" />
+                <textarea name="Comment.Text" id="Comment_Text" class="form-control" rows="4"></textarea>
+                <input type="submit" class="btn btn-primary" value="回复" />
+            </form>
+        </div>
+    </div>
+</div>
